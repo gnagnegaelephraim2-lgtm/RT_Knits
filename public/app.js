@@ -782,7 +782,7 @@ function processUserMessage(text) {
   renderChat();
   const input = document.getElementById('chat-user-input');
   if (input) input.value = '';
-  setTimeout(() => addLog(`Inbound WhatsApp webhook received from ${NITA_PHONE} (NITA Dispatcher).`, "info"), 400);
+  setTimeout(() => addLog("Inbound WhatsApp webhook received from NITA Dispatcher.", "info"), 400);
   let assetCode = "42", trade = "general", priority = 2, responseText = "";
   const lower = text.toLowerCase();
   if (lower.includes("knitt") || lower.includes("circular") || lower.includes("bwi")) { assetCode = "39"; trade = "mechanic"; priority = 0; responseText = "Detected **Circular Knitter (Asset 39)**. **P0 Critical**. Requesting mechanic dispatch."; }
@@ -791,18 +791,26 @@ function processUserMessage(text) {
   setTimeout(() => addLog(`NER: Asset ${assetCode}, Priority P${priority}, Trade: ${trade}`, "success"), 1200);
   setTimeout(() => {
     addLog("Inserting task_request...", "success");
+    // Show AI response in chat IMMEDIATELY
+    const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    initialConversations.push({ sender: 'ai', text: responseText, time: aiTime });
+    renderChat();
+    addLog("AI response dispatched to WhatsApp.", "success");
+
+    // Create task via API (async, result logged separately)
     if (window.NITA_CONFIG?.USE_REAL_SUPABASE) {
       NITA_API.createTask({ asset_code: assetCode, created_by_phone: activeSession?.phone || '', description: text, priority, task_type: priority === 0 ? 'emergency' : 'repair' })
-        .then(r => { if (r.error) addLog(`Failed: ${r.message}`, 'error'); else addLog(`Created: ${r.task_request_id}`, 'success'); syncWithSupabase(); })
-        .catch(err => addLog(`Failed: ${err.message}`, 'error'));
+        .then(r => {
+          if (r.error) addLog(`Task creation failed: ${r.message}`, 'error');
+          else if (r.is_duplicate) addLog(`Duplicate detected — existing task ${r.existing_task_id?.substring(0, 8)}...`, 'warn');
+          else addLog(`Task created successfully (status: ${r.status || 'pending_approval'})`, 'success');
+          syncWithSupabase();
+        })
+        .catch(err => addLog(`Task creation error: ${err.message}`, 'error'));
     } else {
       taskRequests.unshift({ task_request_id: generateId('task'), asset_id: assetCode, created_by_user_id: activeSession?.name || "Operator", status: "pending_approval", priority, requested_at: new Date().toISOString(), description: text, task_type: "repair", approved_by_user_id: null, approved_at: null, rejection_reason: null, media_urls: [] });
       saveDB(); renderFmDashboard(); renderTaskEntryTable(); renderApprovalTable();
     }
-    const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    initialConversations.push({ sender: 'ai', text: responseText, time: aiTime });
-    renderChat();
-    addLog("AI response dispatched.", "success");
   }, 2000);
 }
 
