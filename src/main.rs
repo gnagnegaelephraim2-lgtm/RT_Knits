@@ -124,12 +124,12 @@ fn load_users() -> HashMap<String, User> {
             },
         );
         default_users.insert(
-            "+23057551012".to_string(),
+            "+237652278011".to_string(),
             User {
-                phone_number: "+23057551012".to_string(),
+                phone_number: "+237652278011".to_string(),
                 pin_hash: hash_pin("2222"),
                 role: "technician".to_string(),
-                full_name: "Jean-Marc Rughoo".to_string(),
+                full_name: "Nelson Fodjo".to_string(),
             },
         );
         

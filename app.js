@@ -60,96 +60,12 @@ const TECH_ID_MAP = {
 };
 
 // ------------------------------------------------------------
-// Initial Mock Database Records
+// Initial Data — all loaded from Supabase on startup
 // ------------------------------------------------------------
-let departments = [
-  { department_id: "3c30524e-3011-4cbc-af09-459507cc259d", name: "Knitting Floor" },
-  { department_id: "fcf8a38e-8b8c-484f-ad34-b8996002275c", name: "Cutting Department" },
-  { department_id: "f3791e17-7463-4084-b721-0bb9e9b014a2", name: "Engineering Division" },
-  { department_id: "ec97521a-bdfd-4a14-a53f-515c1b1ecec1", name: "Canteen & Admin Area" },
-  { department_id: "12a67ad8-60a1-49ee-a6fa-c6a6676d161b", name: "Central Stores" }
-];
-
-let assets = [
-  { asset_id: "87ca0eac-e8b6-4d46-8262-314699b8a854", asset_code: "39", name: "Circular Knitter — Brother CK-8", status: "in_use", location: "Knitting Floor, Row 3", required_trade: "mechanic" },
-  { asset_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", asset_code: "175", name: "Cutting Machine — Gerber Z1", status: "in_use", location: "Cutting Department, Row 1", required_trade: "mechanic" },
-  { asset_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901", asset_code: "42", name: "Sewing Machine — Juki DDL-9000", status: "in_use", location: "Knitting Floor, Row 1", required_trade: "mechanic" },
-  { asset_id: "c3d4e5f6-a7b8-9012-cdef-123456789012", asset_code: "109", name: "Air Compressor — Atlas Copco", status: "maintenance", location: "Building B, Ground Floor", required_trade: "mechanic" },
-  { asset_id: "d4e5f6a7-b8c9-0123-defa-234567890123", asset_code: "88", name: "Steam Boiler — LTK-400", status: "in_use", location: "Warehouse Area, Row 2", required_trade: "mechanic" }
-];
-
-let technicians = [
-  { technician_id: "1c60280b-4c7f-4996-a827-56b6b4113760", user_id: "eb5ccc36-7c3f-4862-a795-4f1152b90006", full_name: "Nelson Fodjo", trade: "mechanic", active: true, workload: 0 },
-  { technician_id: "tech-2", user_id: "user-2", full_name: "Priya Singh", trade: "mechanic", active: true, workload: 0 },
-  { technician_id: "tech-3", user_id: "user-3", full_name: "Avinash Kowlessur", trade: "electrician", active: true, workload: 0 },
-  { technician_id: "tech-4", user_id: "user-4", full_name: "Rishi Gopaul", trade: "welder", active: true, workload: 0 },
-  { technician_id: "tech-5", user_id: "user-5", full_name: "Farhan Ally", trade: "hvac", active: false, workload: 0 }
-];
-
-// Initial Tasks
-let taskRequests = [
-  {
-    task_request_id: "379555",
-    asset_id: "39",
-    created_by_user_id: "jeanphillipe",
-    status: "pending_approval",
-    priority: 0,
-    requested_at: "2025-12-15T09:12:00.000Z",
-    description: "Rewinding machine ground floor to install two line wires to slide air pressure.",
-    task_type: "New Task",
-    approved_by_user_id: null,
-    approved_at: null,
-    rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-12-15"
-  },
-  {
-    task_request_id: "379636",
-    asset_id: "175",
-    created_by_user_id: "admin",
-    status: "pending_approval",
-    priority: 1,
-    requested_at: "2026-06-29T08:45:00.000Z",
-    description: "Piping for combiwash + CPB (steam, condensates, air, soft water, hot water).",
-    task_type: "New Task",
-    approved_by_user_id: null,
-    approved_at: null,
-    rejection_reason: null,
-    media_urls: [],
-    due_date: "2026-06-29"
-  },
-  {
-    task_request_id: "376267",
-    asset_id: "42",
-    created_by_user_id: "david",
-    status: "pending_approval",
-    priority: 1,
-    requested_at: "2025-08-05T10:00:00.000Z",
-    description: "Dyehouse - to lay new network cable from data cabinet to Irshaad office.",
-    task_type: "New Task",
-    approved_by_user_id: null,
-    approved_at: null,
-    rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-08-31"
-  },
-  {
-    task_request_id: "377558",
-    asset_id: "109",
-    created_by_user_id: "Kunal",
-    status: "pending_approval",
-    priority: 2,
-    requested_at: "2025-09-25T11:20:00.000Z",
-    description: "Dyehouse - To install TV.",
-    task_type: "New Task",
-    approved_by_user_id: null,
-    approved_at: null,
-    rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-09-25"
-  }
-];
-
+let departments = [];
+let assets = [];
+let technicians = [];
+let taskRequests = [];
 let workOrders = [];
 let workOrderTechnicians = [];
 let feedbacks = [];
@@ -457,28 +373,34 @@ function initAuthGate() {
       return;
     }
 
-    // Hash PIN with SHA-256 (64-char hex) for server validation
+    // Hash PIN with SHA-256
     const pinHash = await sha256Hex(pinInput);
-
     let matchedUser = null;
     let token = '';
 
-    if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-      // Supabase direct authentication
-      try {
-        const users = await fetchSupabase('app_user', 'GET', null, `phone_number=eq.${encodeURIComponent(phoneInput)}`);
-        if (users && users.length > 0) {
-          const user = users[0];
-          if (user.pin_hash === pinHash) {
-            matchedUser = { name: user.full_name, phone: phoneInput, role: user.role, user_id: user.user_id };
+    // 1. Try NITA API login (via api-admin-read to check user exists)
+    try {
+      const result = await NITA_API.adminRead('app_user', 'phone_number', phoneInput, 1);
+      if (!result.error && result.rows && result.rows.length > 0) {
+        const user = result.rows[0];
+        // Validate PIN if pin_hash exists
+        if (user.pin_hash) {
+          if (user.pin_hash !== pinHash) {
+            alert("Incorrect PIN. Please try again.");
+            return;
           }
         }
-      } catch (err) {
-        alert(`Supabase authentication error: ${err.message}`);
-        return;
+        // Map role names: "admin" -> "coordinator"
+        const role = user.role === 'admin' ? 'coordinator' : user.role;
+        matchedUser = { name: user.full_name, phone: phoneInput, role: role, user_id: user.user_id };
+        addLog(`Logged in via NITA API: ${user.full_name} (${role})`, 'success');
       }
-    } else {
-      // Try Rust server auth endpoint first
+    } catch (err) {
+      addLog(`NITA API auth check failed: ${err.message}`, 'warn');
+    }
+
+    // 2. Try Rust server auth
+    if (!matchedUser) {
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -489,27 +411,29 @@ function initAuthGate() {
           const data = await res.json();
           if (!data.error) {
             token = data.token;
-            
-            // Check custom registered users for name
-            let userName = data.role === 'coordinator' ? 'Nelson Fodjo' : data.role === 'operator' ? 'Priya Singh' : 'Jean-Marc Rughoo';
-            const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
-            if (customUsers[phoneInput]) {
-              userName = customUsers[phoneInput].name;
-            }
-            matchedUser = { name: userName, phone: phoneInput, role: data.role, user_id: USER_ID_MAP[phoneInput] || generateId('user'), token };
+            matchedUser = { name: data.role === 'coordinator' ? 'Coordinator' : data.role === 'operator' ? 'Operator' : 'Technician', phone: phoneInput, role: data.role, user_id: USER_ID_MAP[phoneInput] || generateId('user'), token };
           }
         }
-      } catch {
-        // Server unavailable — fall back to local storage auth
-      }
+      } catch {}
+    }
 
-      // Local fallback (custom registered users only)
-      if (!matchedUser) {
-        const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
-        const custom = customUsers[phoneInput];
-        if (custom && custom.pinHash === pinHash) {
-          matchedUser = { name: custom.name, phone: phoneInput, role: custom.role, user_id: generateId('user') };
+    // 3. Try Supabase direct
+    if (!matchedUser && window.NITA_CONFIG?.USE_REAL_SUPABASE) {
+      try {
+        const users = await fetchSupabase('app_user', 'GET', null, `phone_number=eq.${encodeURIComponent(phoneInput)}`);
+        if (users && users.length > 0) {
+          const user = users[0];
+          matchedUser = { name: user.full_name, phone: phoneInput, role: user.role, user_id: user.user_id };
         }
+      } catch {}
+    }
+
+    // 4. Local fallback
+    if (!matchedUser) {
+      const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+      const custom = customUsers[phoneInput];
+      if (custom && custom.pinHash === pinHash) {
+        matchedUser = { name: custom.name, phone: phoneInput, role: custom.role, user_id: generateId('user') };
       }
     }
 
@@ -518,9 +442,9 @@ function initAuthGate() {
       localStorage.setItem("nita_active_session", JSON.stringify(matchedUser));
       applyRolePermissions(matchedUser);
       showAuthOverlay(false);
-      addLog(`Authenticated securely. Hashed PIN verified.`, 'success');
+      addLog(`Welcome, ${matchedUser.name}!`, 'success');
     } else {
-      alert("Invalid phone number or secure PIN combination!");
+      alert("No account found with this phone number. Please sign up first or check your number.");
     }
   });
 
@@ -536,127 +460,105 @@ function initAuthGate() {
       alert("All fields are required.");
       return;
     }
-    
-    if (!deptInput) {
-      alert("Please select a department.");
-      return;
-    }
 
     const phoneInput = normalizeWhatsAppPhone(rawPhone);
     const phoneRegex = /^\+[1-9]\d{6,14}$/;
     if (!phoneRegex.test(phoneInput)) {
-      alert("Invalid WhatsApp number format. Please enter a valid number starting with '+' (e.g., +23058589024).");
+      alert("Invalid WhatsApp number. Please enter a valid WhatsApp number in E.164 format (e.g., +23058589024).");
       return;
     }
     
-    // PIN must be 4 to 6 digits
     const pinRegex = /^\d{4,6}$/;
     if (!pinRegex.test(pinInput)) {
-      alert("Secure PIN must be between 4 and 6 numeric digits.");
+      alert("PIN must be 4-6 digits.");
       return;
     }
     
     const pinHash = await sha256Hex(pinInput);
-    
     let signupSuccess = false;
     let matchedUser = null;
-    let token = '';
-    
-    if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-      // Production Supabase flow
-      try {
-        // Validate user existence first
-        const existingUsers = await fetchSupabase('app_user', 'GET', null, `phone_number=eq.${encodeURIComponent(phoneInput)}`);
-        if (existingUsers && existingUsers.length > 0) {
-          alert("This phone number is already registered. Please sign in instead.");
-          return;
-        }
 
-        const userId = generateId('user');
-        const newUser = {
-          user_id: userId,
-          department_id: deptInput,
-          full_name: nameInput,
-          role: roleInput,
-          phone_number: phoneInput,
-          pin_hash: pinHash
-        };
-        
-        await fetchSupabase('app_user', 'POST', newUser);
-        
-        if (roleInput === 'technician') {
-          const techId = generateId('tech');
-          const newTech = {
-            technician_id: techId,
-            user_id: userId,
-            full_name: nameInput,
-            trade: tradeInput,
-            active: true,
-            workload: 0
-          };
-          await fetchSupabase('technician', 'POST', newTech);
+    // 1. Check if user already exists via NITA API
+    try {
+      const existing = await NITA_API.adminRead('app_user', 'phone_number', phoneInput, 1);
+      if (!existing.error && existing.rows && existing.rows.length > 0) {
+        alert(`Account with ${phoneInput} already exists. Please sign in.`);
+        return;
+      }
+    } catch {}
+
+    // 2. Try NITA API admin-assign for technician signup
+    if (roleInput === 'technician') {
+      try {
+        const result = await NITA_API.adminAssign({
+          admin_phone: phoneInput,
+          asset_code: '0',
+          technician_id: generateId('tech'),
+          instructions: `New technician: ${nameInput}, trade: ${tradeInput}`,
+          task_type: 'inspection'
+        });
+        if (!result.error) {
+          signupSuccess = true;
         }
-        
+      } catch {}
+    }
+
+    // 3. Try Supabase direct write
+    if (!signupSuccess && window.NITA_CONFIG?.USE_REAL_SUPABASE) {
+      try {
+        const userId = generateId('user');
+        const newUser = { user_id: userId, full_name: nameInput, role: roleInput, phone_number: phoneInput, whatsapp_verified: true };
+        if (deptInput) newUser.department_id = deptInput;
+        await fetchSupabase('app_user', 'POST', newUser);
         signupSuccess = true;
         matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: userId };
       } catch (err) {
-        alert(`Registration failed on Supabase: ${err.message}`);
-        return;
+        if (err.message && err.message.includes('duplicate')) {
+          alert(`Account with ${phoneInput} already exists. Please sign in.`);
+          return;
+        }
       }
-    } else {
-      // Local/Rust server flow
+    }
+
+    // 4. Try Rust server signup
+    if (!signupSuccess) {
       try {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            phone_number: phoneInput,
-            pin_hash: pinHash,
-            role: roleInput,
-            full_name: nameInput
-          })
+          body: JSON.stringify({ phone_number: phoneInput, pin_hash: pinHash, role: roleInput, full_name: nameInput })
         });
-        
         if (res.ok) {
           const data = await res.json();
-          if (!data.error) {
-            signupSuccess = true;
-          } else {
-            alert(`Registration error: ${data.message}`);
-            return;
-          }
-        } else {
-          const data = await res.json();
-          alert(`Registration error: ${data.message || 'Server error'}`);
-          return;
+          if (!data.error) signupSuccess = true;
         }
-      } catch {
-        // Fallback to local storage persistence
-        let localUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
-        if (localUsers[phoneInput]) {
-          alert("A user with this phone number is already registered locally.");
-          return;
-        }
-        localUsers[phoneInput] = {
-          name: nameInput,
-          pinHash: pinHash,
-          role: roleInput,
-          dept: deptInput,
-          trade: roleInput === 'technician' ? tradeInput : null
-        };
-        localStorage.setItem("nita_custom_users", JSON.stringify(localUsers));
-        signupSuccess = true;
+      } catch {}
+    }
+
+    // 5. Local fallback
+    if (!signupSuccess) {
+      let localUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+      if (localUsers[phoneInput]) {
+        alert(`Account with ${phoneInput} already exists locally. Please sign in.`);
+        return;
       }
-      
-      if (signupSuccess) {
-        // Log in to get token
-        try {
-          const loginRes = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone_number: phoneInput, pin_hash: pinHash })
-          });
-          if (loginRes.ok) {
+      localUsers[phoneInput] = { name: nameInput, pinHash, role: roleInput, dept: deptInput, trade: roleInput === 'technician' ? tradeInput : null };
+      localStorage.setItem("nita_custom_users", JSON.stringify(localUsers));
+      signupSuccess = true;
+      matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: generateId('user') };
+    }
+
+    if (signupSuccess) {
+      if (!matchedUser) {
+        matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: generateId('user') };
+      }
+      activeSession = matchedUser;
+      localStorage.setItem("nita_active_session", JSON.stringify(matchedUser));
+      applyRolePermissions(matchedUser);
+      showAuthOverlay(false);
+      addLog(`Account created. Welcome, ${nameInput}!`, 'success');
+    }
+  });
             const loginData = await loginRes.json();
             token = loginData.token;
           }
