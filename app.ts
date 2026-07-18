@@ -2,15 +2,13 @@
 // RT KNITS — NITA CMMS AGENTIC PROTOTYPE & ENGINE (TYPESCRIPT)
 // ============================================================
 
-// Extend window interface
-declare global {
-  interface Window {
-    NITA_CONFIG?: {
-      USE_REAL_SUPABASE: boolean;
-      SUPABASE_URL: string;
-      SUPABASE_ANON_KEY: string;
-    };
-  }
+interface Window {
+  NITA_CONFIG?: {
+    USE_REAL_SUPABASE: boolean;
+    SUPABASE_URL: string;
+    SUPABASE_ANON_KEY: string;
+    NITA_API_URL?: string;
+  };
 }
 
 // ------------------------------------------------------------
@@ -39,19 +37,14 @@ function generateId(prefix: string): string {
 // ------------------------------------------------------------
 // Utility: Cached asset/dept lookups (O(1) instead of O(n) per render)
 // ------------------------------------------------------------
-const assetMap = new Map<string, Asset>();       // keyed by asset_code
-const assetIdMap = new Map<string, Asset>();     // keyed by asset_id (UUID)
+const assetMap = new Map<string, Asset>();
 const deptMap = new Map<string, Department>();
 
 function rebuildLookupCaches(): void {
   assetMap.clear();
-  assetIdMap.clear();
   deptMap.clear();
-  for (const a of assets) {
-    assetMap.set(a.asset_code, a);
-    assetIdMap.set(a.asset_id, a);
-  }
-  for (const d of departments) deptMap.set(d.department_id, d);
+  for (const a of assets) assetMap.set(a.code, a);
+  for (const d of departments) deptMap.set(d.id, d);
 }
 rebuildLookupCaches();
 
@@ -59,28 +52,29 @@ rebuildLookupCaches();
 // Interfaces and Type Definitions
 // ------------------------------------------------------------
 interface Department {
-  department_id: string;
+  id: string;
   name: string;
+  location?: string;
 }
 
 interface Asset {
-  asset_id: string;
-  asset_code: string;
+  code: string;
   name: string;
   status: string;
   location: string;
-  required_trade: string;
+  dept_id: string;
+  type?: string;
+  serial?: string;
 }
 
 type TradeType = 'mechanic' | 'electrician' | 'welder' | 'plumber' | 'hvac' | 'general';
 
 interface Technician {
-  technician_id: string;
-  user_id: string;
-  full_name: string;
+  id: string;
+  name: string;
   trade: TradeType;
   active: boolean;
-  workload?: number; // Computed from work_order_technician assignments
+  workload?: number;
 }
 
 interface TaskRequest {
