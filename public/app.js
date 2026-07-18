@@ -559,23 +559,6 @@ function initAuthGate() {
       addLog(`Account created. Welcome, ${nameInput}!`, 'success');
     }
   });
-            const loginData = await loginRes.json();
-            token = loginData.token;
-          }
-        } catch {}
-        
-        matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: generateId('user'), token };
-      }
-    }
-    
-    if (signupSuccess && matchedUser) {
-      activeSession = matchedUser;
-      localStorage.setItem("nita_active_session", JSON.stringify(matchedUser));
-      applyRolePermissions(matchedUser);
-      showAuthOverlay(false);
-      addLog(`Signed up and authenticated. Hashed PIN registered successfully.`, 'success');
-    }
-  });
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     activeSession = null;
