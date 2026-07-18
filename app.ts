@@ -38,13 +38,18 @@ function generateId(prefix: string): string {
 // Utility: Cached asset/dept lookups (O(1) instead of O(n) per render)
 // ------------------------------------------------------------
 const assetMap = new Map<string, Asset>();
+const assetIdMap = new Map<string, Asset>();
 const deptMap = new Map<string, Department>();
 
 function rebuildLookupCaches(): void {
   assetMap.clear();
+  assetIdMap.clear();
   deptMap.clear();
-  for (const a of assets) assetMap.set(a.code, a);
-  for (const d of departments) deptMap.set(d.id, d);
+  for (const a of assets) {
+    assetMap.set(a.asset_code, a);
+    if (a.asset_id) assetIdMap.set(a.asset_id, a);
+  }
+  for (const d of departments) deptMap.set(d.department_id, d);
 }
 rebuildLookupCaches();
 
@@ -52,17 +57,19 @@ rebuildLookupCaches();
 // Interfaces and Type Definitions
 // ------------------------------------------------------------
 interface Department {
-  id: string;
+  department_id: string;
   name: string;
   location?: string;
 }
 
 interface Asset {
-  code: string;
+  asset_id: string;
+  asset_code: string;
   name: string;
   status: string;
   location: string;
-  dept_id: string;
+  required_trade?: string;
+  dept_id?: string;
   type?: string;
   serial?: string;
 }
@@ -70,8 +77,9 @@ interface Asset {
 type TradeType = 'mechanic' | 'electrician' | 'welder' | 'plumber' | 'hvac' | 'general';
 
 interface Technician {
-  id: string;
-  name: string;
+  technician_id: string;
+  user_id?: string;
+  full_name: string;
   trade: TradeType;
   active: boolean;
   workload?: number;
@@ -308,7 +316,7 @@ async function syncWithSupabase(): Promise<void> {
     
         if (dbDepts) {
       departments = dbDepts.map((d: any) => ({
-        id: d.department_id,
+        department_id: d.department_id,
         name: d.name,
         location: d.location || ''
       }));
@@ -316,20 +324,23 @@ async function syncWithSupabase(): Promise<void> {
     
     if (dbAssets) {
       assets = dbAssets.map((a: any) => ({
-        code: a.asset_code,
+        asset_id: a.asset_id,
+        asset_code: a.asset_code,
         name: a.name,
         status: a.status,
         location: a.location,
         dept_id: a.dept_id,
         type: a.type || 'Production Loom',
-        serial: a.serial || ''
+        serial: a.serial || '',
+        required_trade: a.required_trade || 'general'
       }));
     }
     
     if (dbTechs) {
       technicians = dbTechs.map((t: any) => ({
-        id: t.technician_id,
-        name: t.full_name,
+        technician_id: t.technician_id,
+        user_id: t.user_id,
+        full_name: t.full_name,
         trade: t.trade,
         active: t.active,
         workload: t.workload || 0
@@ -442,7 +453,7 @@ function populateSignupDepartments(force = false): void {
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
-    opt.value = dept.id;
+    opt.value = dept.department_id;
     opt.textContent = dept.name;
     select.appendChild(opt);
   });
@@ -950,7 +961,7 @@ function loadTaskToForm(task: TaskRequest): void {
   const asset = assetIdMap.get(task.asset_id);
   if (codeField) codeField.value = asset ? asset.asset_code : task.asset_id;
   if (nameField) nameField.value = asset ? asset.name : '';
-  if (typeField) typeField.value = asset ? asset.required_trade : '';
+  if (typeField) typeField.value = asset?.required_trade || '';
   if (serialField) serialField.value = asset ? asset.asset_code : '';
   if (deptField) deptField.value = '';
   if (locField) locField.value = asset ? asset.location : '';
@@ -970,7 +981,7 @@ function teSearchAsset(): void {
     const locField = document.getElementById('te-asset-loc') as HTMLInputElement;
     
     if (nameField) nameField.value = asset.name;
-    if (typeField) typeField.value = asset.required_trade;
+    if (typeField) typeField.value = asset.required_trade || '';
     if (serialField) serialField.value = asset.asset_code;
     if (deptField) deptField.value = '';
     if (locField) locField.value = asset.location;
@@ -1108,8 +1119,8 @@ function renderBreakdownTasks(): void {
   if (pbTechSelect && pbTechSelect.children.length === 0) {
     technicians.forEach(t => {
       const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = `${t.name} (${t.trade})`;
+      opt.value = t.technician_id;
+      opt.textContent = `${t.full_name} (${t.trade})`;
       pbTechSelect.appendChild(opt);
     });
   }
@@ -1424,7 +1435,7 @@ function approveTaskImmediate(id: string): void {
         bestMech.workload = (bestMech.workload || 0) + 1;
         workOrderTechnicians.push({
           work_order_id: wo.work_order_id,
-          technician_id: bestMech.id,
+          technician_id: bestMech.technician_id,
           assigned_at: new Date().toISOString(),
           status: 'assigned'
         });
