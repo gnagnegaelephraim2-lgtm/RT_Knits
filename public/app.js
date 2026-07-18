@@ -734,7 +734,8 @@ window.techUpdateJob = techUpdateJob;
 // ============================================================
 // 8. WHATSAPP SIMULATOR
 // ============================================================
-const initialConversations = [{ sender: 'ai', text: "Hello! Welcome to the RT Knits NITA Dispatch Bot. What issue are you experiencing?", time: "08:00 AM" }];
+const initialConversations = [{ sender: 'ai', text: "Hello! Welcome to the RT Knits NITA Dispatch Bot. I help you coordinate maintenance requests instantly. What issue are you experiencing on the floor?", time: "08:00 AM" }];
+const NITA_PHONE = window.NITA_CONFIG?.NITA_WHATSAPP || '+15551564344';
 
 function renderChat() {
   const el = document.getElementById('chat-messages');
@@ -781,7 +782,7 @@ function processUserMessage(text) {
   renderChat();
   const input = document.getElementById('chat-user-input');
   if (input) input.value = '';
-  setTimeout(() => addLog("Inbound WhatsApp webhook received.", "info"), 400);
+  setTimeout(() => addLog(`Inbound WhatsApp webhook received from ${NITA_PHONE} (NITA Dispatcher).`, "info"), 400);
   let assetCode = "42", trade = "general", priority = 2, responseText = "";
   const lower = text.toLowerCase();
   if (lower.includes("knitt") || lower.includes("circular") || lower.includes("bwi")) { assetCode = "39"; trade = "mechanic"; priority = 0; responseText = "Detected **Circular Knitter (Asset 39)**. **P0 Critical**. Requesting mechanic dispatch."; }

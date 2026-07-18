@@ -13,5 +13,8 @@ window.NITA_CONFIG = {
   SUPABASE_ANON_KEY: "sb_publishable_-MD1kTyYaUY9NR4ldDDHAw_RZ1SFTTx",
 
   // NITA API Backend (n8n webhook)
-  NITA_API_URL: "https://bot.nelsonfodjo.me/webhook"
+  NITA_API_URL: "https://bot.nelsonfodjo.me/webhook",
+
+  // NITA WhatsApp number
+  NITA_WHATSAPP: "+15551564344"
 };
