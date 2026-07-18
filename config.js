@@ -6,12 +6,10 @@
 // ============================================================
 
 window.NITA_CONFIG = {
-  // Set to true to enable live Supabase database (production mode)
-  USE_REAL_SUPABASE: false,
+  // Change to true to disable localStorage mock and enable live Supabase connections!
+  USE_REAL_SUPABASE: true,
 
-  // Your Supabase project URL (e.g. https://abcdef.supabase.co)
-  SUPABASE_URL: "https://your-project-id.supabase.co",
-
-  // Your Supabase anon/public key (starts with eyJ...)
-  SUPABASE_ANON_KEY: "your-supabase-anon-key-here"
+  // Paste your Supabase project parameters here:
+  SUPABASE_URL: "https://zemhcqrnlfikvtgknqjp.supabase.co",
+  SUPABASE_ANON_KEY: "PASTE_YOUR_SUPABASE_ANON_KEY_HERE"
 };

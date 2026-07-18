@@ -40,9 +40,24 @@ function rebuildLookupCaches() {
 rebuildLookupCaches();
 
 // ------------------------------------------------------------
+// CurrentSession type
+// ------------------------------------------------------------
+// Phone-to-user_id mapping for local auth fallback
+const USER_ID_MAP = {
+  '+23054737266': 'aa3a190a-dbca-49d7-84fe-19a9dcf18f03',
+  '+23052000101': 'aa3a190a-dbca-49d7-84fe-19a9dcf18f01',
+  '+23057551012': 'aa3a190a-dbca-49d7-84fe-19a9dcf18f02',
+};
+
+// Technician UUID mapping
+const TECH_ID_MAP = {
+  '+23057551012': 'b03a190a-dbca-49d7-84fe-19a9dcf18f91',
+};
+
+// ------------------------------------------------------------
 // Initial Mock Database Records
 // ------------------------------------------------------------
-const departments = [
+let departments = [
   { id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", name: "Knitting Floor", location: "Knitting Floor, Row 3" },
   { id: "d27a1921-9922-4a0b-8cf2-ab9964a2b91c", name: "Cutting Department", location: "Cutting Department, Row 1" },
   { id: "e12a95c9-ca5e-436e-bcfc-843de9c1629d", name: "Engineering Division", location: "Building B, Ground Floor" },
@@ -50,7 +65,7 @@ const departments = [
   { id: "b28c03e8-55fa-4c4f-9efd-a9121aef42f0", name: "Central Stores", location: "Warehouse Area, Row 2" }
 ];
 
-const assets = [
+let assets = [
   { code: "39", name: "Circular Knitter — Brother CK-8", status: "down", location: "Knitting Floor, Row 3", dept_id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", type: "Production Loom", serial: "SN-9983-CK" },
   { code: "175", name: "Cutting Machine — Gerber Z1", status: "in_use", location: "Cutting Department, Row 1", dept_id: "d27a1921-9922-4a0b-8cf2-ab9964a2b91c", type: "Gerber Precision", serial: "SN-8822-GZ" },
   { code: "42", name: "Sewing Machine — Juki DDL-9000", status: "in_use", location: "Knitting Floor, Row 1", dept_id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", type: "Utility Equipment", serial: "SN-1022-JK" },
@@ -58,7 +73,7 @@ const assets = [
   { code: "88", name: "Steam Boiler — LTK-400", status: "in_use", location: "Warehouse Area, Row 2", dept_id: "b28c03e8-55fa-4c4f-9efd-a9121aef42f0", type: "Utilities Boiler", serial: "SN-7742-LT" }
 ];
 
-const technicians = [
+let technicians = [
   { id: "tech-1", name: "Jean-Marc Rughoo", trade: "mechanic", active: true, workload: 1 },
   { id: "tech-2", name: "Priya Singh", trade: "mechanic", active: true, workload: 0 },
   { id: "tech-3", name: "Avinash Kowlessur", trade: "electrician", active: true, workload: 2 },
@@ -177,15 +192,50 @@ function fireSupabase(method, table, body, query) {
 async function syncWithSupabase() {
   if (!window.NITA_CONFIG || !window.NITA_CONFIG.USE_REAL_SUPABASE) return;
   try {
-    const [tasks, orders, assignments] = await Promise.all([
+    const [tasks, orders, assignments, dbDepts, dbAssets, dbTechs] = await Promise.all([
       fetchSupabase('task_request', 'GET', null, 'select=*'),
       fetchSupabase('work_order', 'GET', null, 'select=*'),
-      fetchSupabase('work_order_technician', 'GET', null, 'select=*')
+      fetchSupabase('work_order_technician', 'GET', null, 'select=*'),
+      fetchSupabase('department', 'GET', null, 'select=*'),
+      fetchSupabase('asset', 'GET', null, 'select=*'),
+      fetchSupabase('technician', 'GET', null, 'select=*')
     ]);
     
     if (tasks) taskRequests = tasks;
     if (orders) workOrders = orders;
     if (assignments) workOrderTechnicians = assignments;
+    
+    if (dbDepts) {
+      departments = dbDepts.map(d => ({
+        id: d.department_id,
+        name: d.name,
+        location: d.location
+      }));
+    }
+    
+    if (dbAssets) {
+      assets = dbAssets.map(a => ({
+        code: a.asset_code,
+        name: a.name,
+        status: a.status,
+        location: a.location,
+        dept_id: a.dept_id,
+        type: a.type,
+        serial: a.serial
+      }));
+    }
+    
+    if (dbTechs) {
+      technicians = dbTechs.map(t => ({
+        id: t.technician_id,
+        name: t.full_name,
+        trade: t.trade,
+        active: t.active,
+        workload: t.workload
+      }));
+    }
+    
+    rebuildLookupCaches();
     
     renderFmDashboard();
     renderTaskEntryTable();
@@ -193,7 +243,7 @@ async function syncWithSupabase() {
     renderBreakdownTasks();
     renderTechnicianDailyJobs();
   } catch (err) {
-    addLog(`Supabase API Synchronization failed: ${err}`, 'error');
+    addLog(`Supabase API Synchronization failed: ${err.message || err}`, 'error');
   }
 }
 
@@ -235,6 +285,54 @@ function saveDB() {
 // ------------------------------------------------------------
 let activeSession = null;
 
+function switchAuthTab(tab) {
+  const tabLogin = document.getElementById('tab-login');
+  const tabSignup = document.getElementById('tab-signup');
+  const paneLogin = document.getElementById('form-login-pane');
+  const paneSignup = document.getElementById('form-signup-pane');
+  
+  if (!tabLogin || !tabSignup || !paneLogin || !paneSignup) return;
+
+  if (tab === 'login') {
+    tabLogin.classList.add('active');
+    tabSignup.classList.remove('active');
+    paneLogin.classList.add('active');
+    paneSignup.classList.remove('active');
+  } else {
+    tabLogin.classList.remove('active');
+    tabSignup.classList.add('active');
+    paneLogin.classList.remove('active');
+    paneSignup.classList.add('active');
+    populateSignupDepartments();
+  }
+}
+window.switchAuthTab = switchAuthTab;
+
+function toggleSignupFields() {
+  const roleSelect = document.getElementById('auth-signup-role');
+  const tradeField = document.getElementById('signup-trade-field');
+  if (!roleSelect || !tradeField) return;
+
+  if (roleSelect.value === 'technician') {
+    tradeField.style.display = 'block';
+  } else {
+    tradeField.style.display = 'none';
+  }
+}
+window.toggleSignupFields = toggleSignupFields;
+
+function populateSignupDepartments() {
+  const select = document.getElementById('auth-signup-dept');
+  if (!select || select.children.length > 0) return; // Already populated
+  
+  departments.forEach(dept => {
+    const opt = document.createElement('option');
+    opt.value = dept.id;
+    opt.textContent = dept.name;
+    select.appendChild(opt);
+  });
+}
+
 function initAuthGate() {
   const savedSession = localStorage.getItem("nita_active_session");
   if (savedSession) {
@@ -244,18 +342,69 @@ function initAuthGate() {
     showAuthOverlay(true);
   }
 
-  document.getElementById('btn-login-submit')?.addEventListener('click', () => {
+  document.getElementById('btn-login-submit')?.addEventListener('click', async () => {
     const phoneInput = document.getElementById('auth-phone').value.trim();
     const pinInput = document.getElementById('auth-pin').value.trim();
     
-    // Auth Check
+    if (!phoneInput || !pinInput) {
+      alert("Please enter phone number and PIN.");
+      return;
+    }
+
+    // Hash PIN with SHA-256 (64-char hex) for server validation
+    const pinHash = await sha256Hex(pinInput);
+
     let matchedUser = null;
-    if (phoneInput === '+23054737266' && pinInput === '1234') {
-      matchedUser = { name: "Nelson Fodjo", phone: phoneInput, role: 'coordinator' };
-    } else if (phoneInput === '+23052000101' && pinInput === '1111') {
-      matchedUser = { name: "Priya Singh", phone: phoneInput, role: 'operator' };
-    } else if (phoneInput === '+23057551012' && pinInput === '2222') {
-      matchedUser = { name: "Jean-Marc Rughoo", phone: phoneInput, role: 'technician' };
+    let token = '';
+
+    if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
+      // Supabase direct authentication
+      try {
+        const users = await fetchSupabase('app_user', 'GET', null, `phone_number=eq.${encodeURIComponent(phoneInput)}`);
+        if (users && users.length > 0) {
+          const user = users[0];
+          if (user.pin_hash === pinHash) {
+            matchedUser = { name: user.full_name, phone: phoneInput, role: user.role, user_id: user.user_id };
+          }
+        }
+      } catch (err) {
+        alert(`Supabase authentication error: ${err.message}`);
+        return;
+      }
+    } else {
+      // Try Rust server auth endpoint first
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phoneInput, pin_hash: pinHash })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.error) {
+            token = data.token;
+            
+            // Check custom registered users for name
+            let userName = data.role === 'coordinator' ? 'Nelson Fodjo' : data.role === 'operator' ? 'Priya Singh' : 'Jean-Marc Rughoo';
+            const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+            if (customUsers[phoneInput]) {
+              userName = customUsers[phoneInput].name;
+            }
+            matchedUser = { name: userName, phone: phoneInput, role: data.role, user_id: USER_ID_MAP[phoneInput] || generateId('user'), token };
+          }
+        }
+      } catch {
+        // Server unavailable — fall back to local storage auth
+      }
+
+      // Local fallback (custom registered users only)
+      if (!matchedUser) {
+        const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+        const custom = customUsers[phoneInput];
+        if (custom && custom.pinHash === pinHash) {
+          matchedUser = { name: custom.name, phone: phoneInput, role: custom.role, user_id: generateId('user') };
+        }
+      }
     }
 
     if (matchedUser) {
@@ -263,9 +412,148 @@ function initAuthGate() {
       localStorage.setItem("nita_active_session", JSON.stringify(matchedUser));
       applyRolePermissions(matchedUser);
       showAuthOverlay(false);
-      addLog(`Authenticated securely. Hashed PIN verified with browser WebCrypto proxy.`, 'success');
+      addLog(`Authenticated securely. Hashed PIN verified.`, 'success');
     } else {
       alert("Invalid phone number or secure PIN combination!");
+    }
+  });
+
+  document.getElementById('btn-signup-submit')?.addEventListener('click', async () => {
+    const nameInput = document.getElementById('auth-signup-name').value.trim();
+    const phoneInput = document.getElementById('auth-signup-phone').value.trim();
+    const roleInput = document.getElementById('auth-signup-role').value;
+    const deptInput = document.getElementById('auth-signup-dept').value;
+    const tradeInput = document.getElementById('auth-signup-trade').value;
+    const pinInput = document.getElementById('auth-signup-pin').value.trim();
+    
+    if (!nameInput || !phoneInput || !pinInput) {
+      alert("All fields are required.");
+      return;
+    }
+    
+    // E.164 phone format validation
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phoneInput)) {
+      alert("Invalid phone format. Please use E.164 format (+XXXXXXXXXXX).");
+      return;
+    }
+    
+    // PIN must be 4 to 6 digits
+    const pinRegex = /^\d{4,6}$/;
+    if (!pinRegex.test(pinInput)) {
+      alert("Secure PIN must be between 4 and 6 numeric digits.");
+      return;
+    }
+    
+    const pinHash = await sha256Hex(pinInput);
+    
+    let signupSuccess = false;
+    let matchedUser = null;
+    let token = '';
+    
+    if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
+      // Production Supabase flow
+      try {
+        const userId = generateId('user');
+        const newUser = {
+          user_id: userId,
+          department_id: deptInput,
+          full_name: nameInput,
+          role: roleInput,
+          phone_number: phoneInput,
+          pin_hash: pinHash
+        };
+        
+        await fetchSupabase('app_user', 'POST', newUser);
+        
+        if (roleInput === 'technician') {
+          const techId = generateId('tech');
+          const newTech = {
+            technician_id: techId,
+            user_id: userId,
+            full_name: nameInput,
+            trade: tradeInput,
+            active: true,
+            workload: 0
+          };
+          await fetchSupabase('technician', 'POST', newTech);
+        }
+        
+        signupSuccess = true;
+        matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: userId };
+      } catch (err) {
+        alert(`Registration failed on Supabase: ${err.message}`);
+        return;
+      }
+    } else {
+      // Local/Rust server flow
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone_number: phoneInput,
+            pin_hash: pinHash,
+            role: roleInput,
+            full_name: nameInput
+          })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.error) {
+            signupSuccess = true;
+          } else {
+            alert(`Registration error: ${data.message}`);
+            return;
+          }
+        } else {
+          const data = await res.json();
+          alert(`Registration error: ${data.message || 'Server error'}`);
+          return;
+        }
+      } catch {
+        // Fallback to local storage persistence
+        let localUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+        if (localUsers[phoneInput]) {
+          alert("A user with this phone number is already registered locally.");
+          return;
+        }
+        localUsers[phoneInput] = {
+          name: nameInput,
+          pinHash: pinHash,
+          role: roleInput,
+          dept: deptInput,
+          trade: roleInput === 'technician' ? tradeInput : null
+        };
+        localStorage.setItem("nita_custom_users", JSON.stringify(localUsers));
+        signupSuccess = true;
+      }
+      
+      if (signupSuccess) {
+        // Log in to get token
+        try {
+          const loginRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: phoneInput, pin_hash: pinHash })
+          });
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            token = loginData.token;
+          }
+        } catch {}
+        
+        matchedUser = { name: nameInput, phone: phoneInput, role: roleInput, user_id: generateId('user'), token };
+      }
+    }
+    
+    if (signupSuccess && matchedUser) {
+      activeSession = matchedUser;
+      localStorage.setItem("nita_active_session", JSON.stringify(matchedUser));
+      applyRolePermissions(matchedUser);
+      showAuthOverlay(false);
+      addLog(`Signed up and authenticated. Hashed PIN registered successfully.`, 'success');
     }
   });
 
@@ -277,6 +565,13 @@ function initAuthGate() {
   });
 }
 
+// SHA-256 helper — returns 64-char lowercase hex
+async function sha256Hex(input) {
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function showAuthOverlay(show) {
   const overlay = document.getElementById('auth-overlay');
   if (overlay) {
@@ -286,6 +581,7 @@ function showAuthOverlay(show) {
 }
 
 function selectPresetUser(name, phone, pin) {
+  switchAuthTab('login');
   const phoneField = document.getElementById('auth-phone');
   const pinField = document.getElementById('auth-pin');
   if (phoneField && pinField) {
@@ -883,7 +1179,7 @@ function dispatchDirectApproval(id, action) {
       fetchSupabase('task_request', 'PATCH', {
         status: 'approved',
         approved_at: new Date().toISOString(),
-        approved_by_user_id: 'aa3a190a-dbca-49d7-84fe-19a9dcf18f03'
+        approved_by_user_id: activeSession?.user_id || 'aa3a190a-dbca-49d7-84fe-19a9dcf18f03'
       }, `task_request_id=eq.${id}`)
         .then(() => {
           const woId = generateId('wo');
@@ -911,7 +1207,7 @@ function dispatchDirectApproval(id, action) {
     if (action === 'approve') {
       task.status = 'approved';
       task.approved_at = new Date().toISOString();
-      task.approved_by_user_id = activeSession ? activeSession.name : "Nelson Fodjo";
+      task.approved_by_user_id = activeSession ? (activeSession.user_id || activeSession.name) : "Nelson Fodjo";
       
       const woId = generateId('wo');
       workOrders.push({
@@ -956,7 +1252,7 @@ function approveTaskImmediate(id) {
       })
       .then(woId => fetchSupabase('work_order_technician', 'POST', {
         work_order_id: woId,
-        technician_id: 'b03a190a-dbca-49d7-84fe-19a9dcf18f91',
+        technician_id: TECH_ID_MAP[activeSession?.phone || ''] || 'b03a190a-dbca-49d7-84fe-19a9dcf18f91',
         assigned_at: new Date().toISOString(),
         status: 'assigned'
       }))

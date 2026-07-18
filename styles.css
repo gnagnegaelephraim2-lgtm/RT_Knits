@@ -151,6 +151,96 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Authentication Form Tabs */
+.auth-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.auth-tab:hover {
+  color: #1f2937;
+}
+
+.auth-tab.active {
+  color: #1e3a8a; /* RT Theme deep blue */
+  border-bottom: 2px solid #1e3a8a;
+}
+
+/* Auth Panes */
+.auth-form-pane {
+  display: none;
+  animation: authFadeIn 0.3s ease;
+}
+
+.auth-form-pane.active {
+  display: block;
+}
+
+.auth-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form-fields input,
+.auth-form-fields select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #71717a;
+  background: #ffffff;
+  color: #000000;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-form-fields input:focus,
+.auth-form-fields select:focus {
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+  outline: none;
+}
+
+.dev-bypass-details summary {
+  user-select: none;
+  outline: none;
+  transition: color 0.2s ease;
+}
+
+.dev-bypass-details summary:hover {
+  color: #1f2937;
+}
+
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .auth-presets-box {
   background: #f9fafb;
   border: 1px solid var(--border-color);

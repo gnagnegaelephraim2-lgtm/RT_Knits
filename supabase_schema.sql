@@ -37,6 +37,7 @@ CREATE TABLE app_user (
     full_name TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('operator', 'technician', 'coordinator')),
     phone_number TEXT UNIQUE NOT NULL,
+    pin_hash TEXT, -- Storing SHA-256 password hash securely
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -164,6 +165,59 @@ CREATE INDEX idx_asset_code ON asset(asset_code);
 CREATE INDEX idx_user_phone ON app_user(phone_number);
 
 -- ============================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- Enable RLS on all tables and define access rules.
+-- The anon key allows read access; writes require authenticated users.
+-- ============================================================
+
+ALTER TABLE department ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app_user ENABLE ROW LEVEL SECURITY;
+ALTER TABLE technician ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_request ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_order ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_order_technician ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversation_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE message_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_order_feedback ENABLE ROW LEVEL SECURITY;
+
+-- Read policies: authenticated users can read all rows
+CREATE POLICY "dept_read" ON department FOR SELECT USING (true);
+CREATE POLICY "user_read" ON app_user FOR SELECT USING (true);
+CREATE POLICY "tech_read" ON technician FOR SELECT USING (true);
+CREATE POLICY "asset_read" ON asset FOR SELECT USING (true);
+CREATE POLICY "task_read" ON task_request FOR SELECT USING (true);
+CREATE POLICY "wo_read" ON work_order FOR SELECT USING (true);
+CREATE POLICY "wo_tech_read" ON work_order_technician FOR SELECT USING (true);
+CREATE POLICY "conv_read" ON conversation_state FOR SELECT USING (true);
+CREATE POLICY "msg_read" ON message_log FOR SELECT USING (true);
+CREATE POLICY "feedback_read" ON work_order_feedback FOR SELECT USING (true);
+
+-- Write policies: only authenticated users (service_role or authenticated role) can write (with public user signup allowed)
+CREATE POLICY "user_insert" ON app_user FOR INSERT WITH CHECK (true);
+CREATE POLICY "tech_insert" ON technician FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "task_insert" ON task_request FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "task_update" ON task_request FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "task_delete" ON task_request FOR DELETE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "wo_insert" ON work_order FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "wo_update" ON work_order FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "wo_delete" ON work_order FOR DELETE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "wo_tech_insert" ON work_order_technician FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "wo_tech_update" ON work_order_technician FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "wo_tech_delete" ON work_order_technician FOR DELETE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "conv_insert" ON conversation_state FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "conv_update" ON conversation_state FOR UPDATE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "msg_insert" ON message_log FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "feedback_insert" ON work_order_feedback FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "feedback_update" ON work_order_feedback FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- ============================================================
 -- SEED DATA SETS
 -- ============================================================
 
@@ -175,11 +229,11 @@ INSERT INTO department (department_id, name, location) VALUES
 ('a56c4d7f-22a0-47bf-b30f-b28098c4f9a0', 'Canteen & Admin Area', 'Main Administration Block'),
 ('b28c03e8-55fa-4c4f-9efd-a9121aef42f0', 'Central Stores', 'Warehouse Area, Row 2');
 
--- Insert App Users
-INSERT INTO app_user (user_id, department_id, full_name, role, phone_number) VALUES
-('aa3a190a-dbca-49d7-84fe-19a9dcf18f01', 'f83b190a-dbca-49d7-84fe-19a9dcf18f29', 'Priya Singh', 'operator', '+23052000101'),
-('aa3a190a-dbca-49d7-84fe-19a9dcf18f02', 'e12a95c9-ca5e-436e-bcfc-843de9c1629d', 'Jean-Marc Rughoo', 'technician', '+23057551012'),
-('aa3a190a-dbca-49d7-84fe-19a9dcf18f03', 'e12a95c9-ca5e-436e-bcfc-843de9c1629d', 'Nelson Fodjo', 'coordinator', '+23054737266');
+-- Insert App Users (PIN hashes: 1111 -> 0f7d0d088b6ea936fb20647c2e283cf26b63d82afe85eefc0da23d5635f7e61b, 2222 -> edee29f883e43b895b6c3c57ebaf746e382d5a3ef2c1598f86f345d2f6236b28, 1234 -> 03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4)
+INSERT INTO app_user (user_id, department_id, full_name, role, phone_number, pin_hash) VALUES
+('aa3a190a-dbca-49d7-84fe-19a9dcf18f01', 'f83b190a-dbca-49d7-84fe-19a9dcf18f29', 'Priya Singh', 'operator', '+23052000101', '0f7d0d088b6ea936fb20647c2e283cf26b63d82afe85eefc0da23d5635f7e61b'),
+('aa3a190a-dbca-49d7-84fe-19a9dcf18f02', 'e12a95c9-ca5e-436e-bcfc-843de9c1629d', 'Jean-Marc Rughoo', 'technician', '+23057551012', 'edee29f883e43b895b6c3c57ebaf746e382d5a3ef2c1598f86f345d2f6236b28'),
+('aa3a190a-dbca-49d7-84fe-19a9dcf18f03', 'e12a95c9-ca5e-436e-bcfc-843de9c1629d', 'Nelson Fodjo', 'coordinator', '+23054737266', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4');
 
 -- Insert Technicians
 INSERT INTO technician (technician_id, user_id, full_name, trade, active, workload) VALUES

@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_files::Files;
 use actix_web::{
     get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
@@ -81,30 +82,173 @@ fn get_jwt_secret() -> String {
 }
 
 // Valid user credentials (phone -> (pin_hash, role, name))
-fn get_user_db() -> HashMap<String, (String, String, String)> {
-    let mut db = HashMap::new();
+// NOTE: SHA-256 is used here for prototype simplicity. For production,
+// replace with bcrypt/scrypt/argon2id per OWASP password storage guidelines.
+// Add `bcrypt = "0.15"` to Cargo.toml and use bcrypt::hashpw(pin, bcrypt::DEFAULT_COST).
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct User {
+    phone_number: String,
+    pin_hash: String,
+    role: String,
+    full_name: String,
+}
 
-    // Hash PINs with SHA-256 for comparison
-    let hash_pin = |pin: &str| -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(pin.as_bytes());
-        format!("{:x}", hasher.finalize())
+fn load_users() -> HashMap<String, User> {
+    use std::io::Read;
+    let file_path = "./users.json";
+    if !std::path::Path::new(file_path).exists() {
+        let mut default_users = HashMap::new();
+        
+        let hash_pin = |pin: &str| -> String {
+            let mut hasher = Sha256::new();
+            hasher.update(pin.as_bytes());
+            format!("{:x}", hasher.finalize())
+        };
+        
+        default_users.insert(
+            "+23054737266".to_string(),
+            User {
+                phone_number: "+23054737266".to_string(),
+                pin_hash: hash_pin("1234"),
+                role: "coordinator".to_string(),
+                full_name: "Nelson Fodjo".to_string(),
+            },
+        );
+        default_users.insert(
+            "+23052000101".to_string(),
+            User {
+                phone_number: "+23052000101".to_string(),
+                pin_hash: hash_pin("1111"),
+                role: "operator".to_string(),
+                full_name: "Priya Singh".to_string(),
+            },
+        );
+        default_users.insert(
+            "+23057551012".to_string(),
+            User {
+                phone_number: "+23057551012".to_string(),
+                pin_hash: hash_pin("2222"),
+                role: "technician".to_string(),
+                full_name: "Jean-Marc Rughoo".to_string(),
+            },
+        );
+        
+        if let Ok(content) = serde_json::to_string_pretty(&default_users) {
+            let _ = std::fs::write(file_path, content);
+        }
+        return default_users;
+    }
+    
+    if let Ok(mut file) = std::fs::File::open(file_path) {
+        let mut content = String::new();
+        if file.read_to_string(&mut content).is_ok() {
+            if let Ok(users) = serde_json::from_str::<HashMap<String, User>>(&content) {
+                return users;
+            }
+        }
+    }
+    
+    HashMap::new()
+}
+
+fn save_user(user: User) -> Result<(), String> {
+    let file_path = "./users.json";
+    let mut users = load_users();
+    users.insert(user.phone_number.clone(), user);
+    
+    let content = serde_json::to_string_pretty(&users)
+        .map_err(|e| format!("Failed to serialize users: {}", e))?;
+    std::fs::write(file_path, content)
+        .map_err(|e| format!("Failed to write users.json: {}", e))?;
+    Ok(())
+}
+
+#[derive(Deserialize)]
+struct SignupRequest {
+    phone_number: String,
+    pin_hash: String,
+    role: String,
+    full_name: String,
+}
+
+#[post("/api/auth/signup")]
+async fn secure_signup(
+    req: web::Json<SignupRequest>,
+    rate_limit: web::Data<Mutex<RateLimiter>>,
+) -> impl Responder {
+    let client_ip = "127.0.0.1".to_string(); // In production, extract from X-Forwarded-For header
+
+    // Rate limit check
+    {
+        let mut limiter = rate_limit.lock().unwrap_or_else(|poisoned| {
+            eprintln!("WARNING: Rate limiter mutex poisoned, recovering");
+            poisoned.into_inner()
+        });
+        if !limiter.check_and_record(&client_ip) {
+            return HttpResponse::TooManyRequests().json(serde_json::json!({
+                "error": true,
+                "message": "Too many signup attempts. Please try again in 1 minute."
+            }));
+        }
+    }
+
+    // Input validation
+    if req.phone_number.is_empty() || req.pin_hash.is_empty() || req.role.is_empty() || req.full_name.is_empty() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": true,
+            "message": "All fields are required for signup."
+        }));
+    }
+
+    // E.164 phone format validation
+    if !req.phone_number.starts_with('+') || req.phone_number.len() < 10 || req.phone_number.len() > 15 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": true,
+            "message": "Invalid phone number format. Use E.164 format (+XXXXXXXXXXX)."
+        }));
+    }
+
+    // PIN hash length validation (SHA-256 hex is 64 chars)
+    if req.pin_hash.len() != 64 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": true,
+            "message": "Invalid PIN hash format."
+        }));
+    }
+
+    // Role validation
+    if req.role != "coordinator" && req.role != "operator" && req.role != "technician" {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": true,
+            "message": "Invalid role specified."
+        }));
+    }
+
+    let users = load_users();
+    if users.contains_key(&req.phone_number) {
+        return HttpResponse::Conflict().json(serde_json::json!({
+            "error": true,
+            "message": "User with this phone number is already registered."
+        }));
+    }
+
+    let new_user = User {
+        phone_number: req.phone_number.clone(),
+        pin_hash: req.pin_hash.clone(),
+        role: req.role.clone(),
+        full_name: req.full_name.clone(),
     };
 
-    db.insert(
-        "+23054737266".to_string(),
-        (hash_pin("1234"), "coordinator".to_string(), "Nelson Fodjo".to_string()),
-    );
-    db.insert(
-        "+23052000101".to_string(),
-        (hash_pin("1111"), "operator".to_string(), "Priya Singh".to_string()),
-    );
-    db.insert(
-        "+23057551012".to_string(),
-        (hash_pin("2222"), "technician".to_string(), "Jean-Marc Rughoo".to_string()),
-    );
-
-    db
+    match save_user(new_user) {
+        Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+            "error": false,
+            "message": "User registered successfully."
+        })),
+        Err(err) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": true,
+            "message": format!("Database write error: {}", err)
+        })),
+    }
 }
 
 #[post("/api/auth/login")]
@@ -153,10 +297,10 @@ async fn secure_login(
         }));
     }
 
-    let user_db = get_user_db();
+    let users = load_users();
 
-    if let Some((expected_hash, role, _name)) = user_db.get(&req.phone_number) {
-        if req.pin_hash == *expected_hash {
+    if let Some(user) = users.get(&req.phone_number) {
+        if req.pin_hash == user.pin_hash {
             let expiration = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -164,7 +308,7 @@ async fn secure_login(
 
             let claims = Claims {
                 sub: req.phone_number.clone(),
-                role: role.clone(),
+                role: user.role.clone(),
                 exp: expiration,
             };
 
@@ -178,7 +322,7 @@ async fn secure_login(
             match token {
                 Ok(token_str) => HttpResponse::Ok().json(AuthResponse {
                     token: token_str,
-                    role: role.clone(),
+                    role: user.role.clone(),
                     error: false,
                 }),
                 Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
@@ -275,10 +419,29 @@ async fn main() -> std::io::Result<()> {
     println!("============================================================");
 
     let rate_limiter = web::Data::new(Mutex::new(RateLimiter::new()));
-    let origins = web::Data::new(allowed_origins);
+    let origins = web::Data::new(allowed_origins.clone());
 
     HttpServer::new(move || {
+        // Build CORS middleware from allowed origins
+        let mut cors = Cors::default();
+        for origin in &allowed_origins {
+            if origin == "*" {
+                cors = cors.allow_any_origin();
+            } else {
+                cors = cors.allowed_origin(origin);
+            }
+        }
+        let cors = cors
+            .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+            .allowed_headers(vec![
+                actix_web::http::header::AUTHORIZATION,
+                actix_web::http::header::CONTENT_TYPE,
+                actix_web::http::header::ACCEPT,
+            ])
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .app_data(rate_limiter.clone())
             .app_data(origins.clone())
@@ -292,7 +455,7 @@ async fn main() -> std::io::Result<()> {
                     headers.insert(
                         actix_web::http::header::CONTENT_SECURITY_POLICY,
                         actix_web::http::header::HeaderValue::from_static(
-                            "default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://bot.nelsonfodjo.me;"
+                            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://bot.nelsonfodjo.me; img-src 'self' data:;"
                         ),
                     );
                     headers.insert(
@@ -323,6 +486,7 @@ async fn main() -> std::io::Result<()> {
                     Ok(res)
                 }
             })
+            .service(secure_signup)
             .service(secure_login)
             .service(secure_status)
             .service(health_check)

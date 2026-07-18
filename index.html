@@ -14,35 +14,74 @@
       <div class="auth-header">
         <div class="auth-logo">RT</div>
         <h2>NITA CMMS Secure Gate</h2>
-        <p>RT Knits Maintenance Portal Login</p>
+        <p>RT Knits Maintenance Portal</p>
       </div>
       
-      <div class="auth-presets-box">
-        <label style="font-size: 11px; color: #4b5563; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Quick-Select Test Role</label>
-        <div class="auth-presets-grid">
-          <button class="preset-btn" onclick="selectPresetUser('Nelson Fodjo', '+23054737266', '1234')">
-            <strong>Coordinator</strong><br>Nelson (PIN: 1234)
-          </button>
-          <button class="preset-btn" onclick="selectPresetUser('Priya Singh', '+23052000101', '1111')">
-            <strong>Operator</strong><br>Priya (PIN: 1111)
-          </button>
-          <button class="preset-btn" onclick="selectPresetUser('Jean-Marc Rughoo', '+23057551012', '2222')">
-            <strong>Technician</strong><br>Jean-Marc (PIN: 2222)
-          </button>
-        </div>
+      <!-- Authentication Tabs -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
       </div>
       
-      <div class="auth-form" style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
-        <div class="fm-form-field">
-          <label>Phone Number (E.164)</label>
-          <input type="text" id="auth-phone" placeholder="+2305XXXXXXX" value="+23054737266" style="color: #000; background: #fff; border: 1px solid #71717a;">
+      <!-- LOGIN FORM -->
+      <div id="form-login-pane" class="auth-form-pane active">
+        <div class="auth-form-fields">
+          <div class="fm-form-field">
+            <label for="auth-phone">Phone Number (E.164)</label>
+            <input type="text" id="auth-phone" placeholder="+2305XXXXXXX" value="+23054737266">
+          </div>
+          <div class="fm-form-field">
+            <label for="auth-pin">Secure PIN</label>
+            <input type="password" id="auth-pin" placeholder="••••" maxlength="6" value="1234">
+          </div>
+          <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-login-submit">Authenticate Secure Session</button>
         </div>
-        <div class="fm-form-field">
-          <label>Secure PIN</label>
-          <input type="password" id="auth-pin" placeholder="••••" maxlength="6" value="1234" style="color: #000; background: #fff; border: 1px solid #71717a;">
-        </div>
-        <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-login-submit">Authenticate Secure Session</button>
       </div>
+
+      <!-- SIGNUP FORM -->
+      <div id="form-signup-pane" class="auth-form-pane">
+        <div class="auth-form-fields">
+          <div class="fm-form-field">
+            <label for="auth-signup-name">Full Name</label>
+            <input type="text" id="auth-signup-name" placeholder="John Doe">
+          </div>
+          <div class="fm-form-field">
+            <label for="auth-signup-phone">Phone Number (E.164)</label>
+            <input type="text" id="auth-signup-phone" placeholder="+2305XXXXXXX">
+          </div>
+          <div class="fm-form-field">
+            <label for="auth-signup-role">Role</label>
+            <select id="auth-signup-role" onchange="toggleSignupFields()">
+              <option value="operator">Operator</option>
+              <option value="technician">Technician</option>
+              <option value="coordinator">Coordinator</option>
+            </select>
+          </div>
+          <div class="fm-form-field" id="signup-dept-field">
+            <label for="auth-signup-dept">Department</label>
+            <select id="auth-signup-dept">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div class="fm-form-field" id="signup-trade-field" style="display: none;">
+            <label for="auth-signup-trade">Technician Trade</label>
+            <select id="auth-signup-trade">
+              <option value="general">General Maintenance</option>
+              <option value="mechanic">Mechanic</option>
+              <option value="electrician">Electrician</option>
+              <option value="welder">Welder</option>
+              <option value="plumber">Plumber</option>
+              <option value="hvac">HVAC Specialist</option>
+            </select>
+          </div>
+          <div class="fm-form-field">
+            <label for="auth-signup-pin">Create Secure PIN (4-6 Digits)</label>
+            <input type="password" id="auth-signup-pin" placeholder="••••" maxlength="6">
+          </div>
+          <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-signup-submit">Create Account & Sign In</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
