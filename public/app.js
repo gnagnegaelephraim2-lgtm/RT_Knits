@@ -220,23 +220,17 @@ function initAuthGate() {
 
   // LOGIN
   document.getElementById('btn-login-submit')?.addEventListener('click', async () => {
-    console.log('[NITA] Login button clicked');
     const rawPhone = document.getElementById('auth-phone').value.trim();
     const pinInput = document.getElementById('auth-pin').value.trim();
-    console.log('[NITA] Phone:', rawPhone, 'PIN length:', pinInput.length);
     if (!rawPhone || !pinInput) { alert("Please enter phone number and PIN."); return; }
     const phone = normalizeWhatsAppPhone(rawPhone);
-    console.log('[NITA] Normalized phone:', phone);
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) { alert("Invalid WhatsApp number. Use E.164 format (e.g. +23058589024)."); return; }
     const pinHash = await sha256Hex(pinInput);
-    console.log('[NITA] PIN hash:', pinHash.substring(0, 16) + '...');
     let matchedUser = null;
 
     // Step 1: NITA API lookup
     try {
-      console.log('[NITA] Calling NITA API...');
       const result = await NITA_API.adminRead('app_user', 'phone_number', phone, 1);
-      console.log('[NITA] API result:', JSON.stringify(result).substring(0, 200));
       if (!result.error && result.rows?.length > 0) {
         const user = result.rows[0];
         if (user.pin_hash && user.pin_hash !== pinHash) { alert("Incorrect PIN. Please try again."); return; }
