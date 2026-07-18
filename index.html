@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RT Maintenance — NITA CMMS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Auth Fullscreen Overlay -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card glass-card">
+      <div class="auth-header">
+        <div class="auth-logo">RT</div>
+        <h2>NITA CMMS Secure Gate</h2>
+        <p>RT Knits Maintenance Portal Login</p>
+      </div>
+      
+      <div class="auth-presets-box">
+        <label style="font-size: 11px; color: #4b5563; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Quick-Select Test Role</label>
+        <div class="auth-presets-grid">
+          <button class="preset-btn" onclick="selectPresetUser('Nelson Fodjo', '+23054737266', '1234')">
+            <strong>Coordinator</strong><br>Nelson (PIN: 1234)
+          </button>
+          <button class="preset-btn" onclick="selectPresetUser('Priya Singh', '+23052000101', '1111')">
+            <strong>Operator</strong><br>Priya (PIN: 1111)
+          </button>
+          <button class="preset-btn" onclick="selectPresetUser('Jean-Marc Rughoo', '+23057551012', '2222')">
+            <strong>Technician</strong><br>Jean-Marc (PIN: 2222)
+          </button>
+        </div>
+      </div>
+      
+      <div class="auth-form" style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <div class="fm-form-field">
+          <label>Phone Number (E.164)</label>
+          <input type="text" id="auth-phone" placeholder="+2305XXXXXXX" value="+23054737266" style="color: #000; background: #fff; border: 1px solid #71717a;">
+        </div>
+        <div class="fm-form-field">
+          <label>Secure PIN</label>
+          <input type="password" id="auth-pin" placeholder="••••" maxlength="6" value="1234" style="color: #000; background: #fff; border: 1px solid #71717a;">
+        </div>
+        <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-login-submit">Authenticate Secure Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <!-- User Profile Card -->
+    <div class="sidebar-user-card glass-card" style="margin-bottom: 20px;">
+      <div class="sidebar-user-avatar" id="current-user-avatar">NF</div>
+      <div style="flex-grow: 1; min-width: 0;">
+        <div class="sidebar-user-name" id="current-user-name" style="color: #1f2937;">Nelson Fodjo</div>
+        <div class="sidebar-user-role" id="current-user-role" style="color: #4b5563;">Coordinator</div>
+      </div>
+      <button class="logout-btn" id="btn-logout" title="Log Out">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+        </svg>
+      </button>
+    </div>
+    
+    <ul class="sidebar-menu" id="sidebar-nav-menu">
+      <li class="menu-item active" data-target="pane-dashboard" id="menu-coordinator-dash">
+        <span>Coordinator Dash</span>
+      </li>
+      <li class="menu-item" data-target="pane-planning-breakdown" id="menu-planning-breakdown">
+        <span>Planning Breakdown</span>
+      </li>
+      <li class="menu-item" data-target="pane-task-entry" id="menu-task-entry">
+        <span>Task Entry</span>
+      </li>
+      <li class="menu-item" data-target="pane-tasks-to-approve" id="menu-tasks-to-approve">
+        <span>Tasks To be Approved</span>
+      </li>
+      <li class="menu-item" data-target="pane-simulator" id="menu-whatsapp-sim">
+        <span>Agent WhatsApp Sim</span>
+      </li>
+      <li class="menu-item" data-target="pane-technician-tasks" id="menu-technician-tasks" style="display: none;">
+        <span>My Daily Tasks</span>
+      </li>
+      <li class="menu-item" data-target="pane-api" id="menu-api">
+        <span>API Sandbox</span>
+      </li>
+      <li class="menu-item" data-target="pane-database" id="menu-database">
+        <span>Data Model</span>
+      </li>
+      <li class="menu-item" data-target="pane-docs" id="menu-docs">
+        <span>Solution Design</span>
+      </li>
+    </ul>
+    
+    <div class="sidebar-footer" style="color: #6b7280;">
+      <div>Host: RT Knits (Mauritius)</div>
+      <div>Uptime SLA Target: 99.8%</div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Top Wavy Header Banner (Exactly matching the screenshots) -->
+    <div class="rt-wavy-header">
+      <div class="rt-logo-area">
+        <div class="rt-logo-circle">
+          <span class="rt-text">RT</span>
+        </div>
+        <div class="rt-header-titles">
+          <div class="rt-title-main">Maintenance</div>
+          <div class="rt-title-sub" id="rt-department-title">Marketing</div>
+        </div>
+      </div>
+      <div class="rt-server-name">
+        Maintenance Database (fmdevserver.rtknits.local)
+      </div>
+    </div>
+
+    <!-- PANE 1: FileMaker Coordinator Dashboard (Image 1 & 2) -->
+    <section id="pane-dashboard" class="content-pane active">
+      <div class="filemaker-main-layout">
+        
+        <!-- Left Side: Table of Departments -->
+        <div class="glass-card fm-sidebar-card">
+          <div class="fm-title-banner">COORDINATOR DASHBOARD</div>
+          <div class="fm-table-scroll-container">
+            <table class="fm-scroll-table" id="fm-dept-dashboard-table">
+              <!-- Dynamically populated rows -->
+            </table>
+          </div>
+        </div>
+
+        <!-- Center/Right Side: Pill Button Grids (Image 1 & 2) -->
+        <div class="fm-grids-container">
+          <div class="fm-buttons-grid-layout">
+            
+            <!-- Group 1 -->
+            <div class="glass-card fm-group-card">
+              <div class="fm-btn-pill primary" onclick="navigateToPane('pane-tasks-to-approve')">Request Approval <span id="fm-badge-approval">28</span></div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Planning Breakdown</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Immediate Planning</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Planned</div>
+            </div>
+
+            <!-- Group 2 -->
+            <div class="glass-card fm-group-card">
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">List of Technicians</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">View all Work Order</div>
+              <div class="fm-btn-pill">Special Task</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-docs')">View Report</div>
+            </div>
+
+            <!-- Group 3 -->
+            <div class="glass-card fm-group-card">
+              <div class="fm-btn-pill">Edit Planned work</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">View Tech Status</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">List of Task</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">List of Task(Preventive)</div>
+            </div>
+
+            <!-- Group 4 -->
+            <div class="glass-card fm-group-card">
+              <div class="fm-btn-pill tan">Report By Tech</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Tech Dash</div>
+              <div class="fm-btn-pill">Preventive Calendar</div>
+              <div class="fm-btn-pill">PrePlanBreak</div>
+              <div class="fm-btn-pill danger" onclick="resetAllWorkOrders()">RESET WORK ORDER</div>
+              <div class="fm-btn-pill">List view calendar</div>
+              <div class="fm-btn-pill">Leakage Calendar</div>
+            </div>
+
+            <!-- Group 5 -->
+            <div class="glass-card fm-group-card">
+              <div class="fm-btn-pill">Printing AssetCode</div>
+              <div class="fm-btn-pill">Asset Register</div>
+              <div class="fm-btn-pill yellow-text">multiUser View</div>
+              <div class="fm-btn-pill">report By work Order</div>
+              <div class="fm-btn-pill">Send Preventive Request</div>
+              <div class="fm-text-link">Technician Working Hours</div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Row: Selected Department Box -->
+          <div class="fm-bottom-detail-box">
+            <div class="glass-card fm-dept-status-card">
+              <div class="fm-small-banner">Department</div>
+              <div class="fm-detail-row">
+                <span class="value" id="fm-detail-dept-name" style="font-weight: 700; font-size: 15px;">Marketing</span>
+              </div>
+              <div class="fm-small-banner" style="margin-top: 10px;">Location</div>
+              <div class="fm-detail-row">
+                <span class="value" id="fm-detail-dept-loc" style="font-size: 13px; color: #4b5563;">Open Office</span>
+              </div>
+              <button class="fm-btn-pill primary" style="margin-top: 12px; width: 100%;">
+                View Request Sent
+              </button>
+            </div>
+
+            <div class="glass-card fm-dept-status-card" style="flex-grow: 2;">
+              <div class="fm-small-banner">Sending Request (Task Type)</div>
+              <div style="display: flex; gap: 16px; justify-content: center; align-items: center; height: 100%;">
+                <button class="fm-large-btn-pill" onclick="navigateToPane('pane-task-entry')">Repair</button>
+                <button class="fm-large-btn-pill" onclick="navigateToPane('pane-task-entry')">Improvements and Projects</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PANE 2: Planning Breakdown (Image 4) -->
+    <section id="pane-planning-breakdown" class="content-pane">
+      <div class="planning-breakdown-layout">
+        
+        <!-- Header Controls & Subtabs -->
+        <div class="glass-card planning-header-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div class="fm-subtabs-row">
+                <button class="subtab-btn active" onclick="setBreakdownTab('leakage')">Leakage Requests</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('repairs')">Planning Repairs</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('pending')">Engineer pending</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('approved')">Engineer Approved</button>
+                <span class="subtab-badge" id="breakdown-pending-count">0</span>
+              </div>
+            </div>
+            
+            <!-- Tech Assignment & Date Allocation grid -->
+            <div class="fm-assignment-controls-box">
+              <div class="assignment-grid">
+                <div class="fm-form-field">
+                  <label>Please Select Technician</label>
+                  <div style="display: flex; gap: 4px;">
+                    <select id="pb-tech-select" style="min-width: 140px; background: #fff; color: #000; border: 1px solid #71717a;">
+                      <!-- Dynamic techs -->
+                    </select>
+                    <button class="planner-btn" style="padding: 2px 8px;">+</button>
+                  </div>
+                </div>
+                <div class="fm-form-field">
+                  <label>Duration (Mins)</label>
+                  <input type="number" id="pb-duration" value="60" style="width: 70px; background: #fff; color: #000; border: 1px solid #71717a;">
+                </div>
+                <div class="fm-form-field">
+                  <label>Person in charge</label>
+                  <input type="text" id="pb-charge-1" value="Nelson Fodjo" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                </div>
+                <div class="fm-form-field">
+                  <label>Person in charge2</label>
+                  <input type="text" id="pb-charge-2" value="" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                </div>
+              </div>
+              
+              <div class="assignment-dates-grid" style="margin-top: 10px;">
+                <div class="fm-form-field">
+                  <label>Plan Startdate</label>
+                  <input type="date" id="pb-start-date" value="2026-07-18" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                </div>
+                <div class="fm-form-field">
+                  <label>Plan Finishdate</label>
+                  <input type="date" id="pb-finish-date" value="2026-07-18" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Breakdown Table -->
+        <div class="glass-card planning-table-card" style="flex-grow: 1; display: flex; flex-direction: column;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-size: 13px; color: #4b5563; font-family: monospace;">OtherAsset:</div>
+            
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #4b5563; font-weight: 700;">Search Description:</span>
+              <input type="text" id="pb-search-description" placeholder="Type to filter..." style="background:#fff; border:1px solid #71717a; color:#000; padding:6px; border-radius:4px; font-size:12px; outline:none;">
+            </div>
+          </div>
+
+          <div style="flex-grow: 1; overflow-y: auto;">
+            <table class="fm-task-list-table select-task-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Department</th>
+                  <th>Asset Name</th>
+                  <th>Requester / Approved By</th>
+                  <th>Description</th>
+                  <th>Project Sheet</th>
+                  <th>Planning Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pb-breakdown-table-body">
+                <!-- Dynamic Breakdown tasks -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+            <button class="planner-btn primary" id="btn-pb-dispatch-engineer">Engineer ➔</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PANE 3: Task Entry Screen (Image 3) -->
+    <section id="pane-task-entry" class="content-pane">
+      <div class="task-entry-layout">
+        
+        <!-- Left Side: Asset Details & Urgency Panel -->
+        <div class="glass-card task-entry-form-panel">
+          <div class="fm-title-banner">TaskType : Repair</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+            
+            <div class="fm-form-field">
+              <label>Asset Code</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="te-asset-code" value="39" style="flex-grow: 1; background: #fff; color: #000; border: 1px solid #71717a;">
+                <button class="planner-btn" style="padding: 4px 10px;" onclick="teSearchAsset()">Search</button>
+              </div>
+            </div>
+            
+            <div class="fm-form-field">
+              <label>Asset Name</label>
+              <input type="text" id="te-asset-name" value="Circular Knitter — Brother CK-8" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            <div class="fm-form-field">
+              <label>Asset Type</label>
+              <input type="text" id="te-asset-type" value="Utility Equipment" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            <div class="fm-form-field">
+              <label>Serial</label>
+              <input type="text" id="te-asset-serial" value="SN-8849-CK" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            <div class="fm-form-field">
+              <label>Department</label>
+              <input type="text" id="te-asset-dept" value="Knitting Floor" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            <div class="fm-form-field">
+              <label>Asset Loc</label>
+              <input type="text" id="te-asset-loc" value="Knitting Floor, Row 3" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 8px 0;">
+            
+            <div class="fm-form-field">
+              <label>Urgency</label>
+              <select id="te-urgency" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                <option value="0">Urgent Repairs</option>
+                <option value="1">Needed repairs</option>
+                <option value="2">Improvements and Projects</option>
+              </select>
+            </div>
+            <div class="fm-form-field">
+              <label>Description</label>
+              <textarea id="te-description" style="background: #fff; color: #000; border: 1px solid #71717a;">Water leakage on Floor</textarea>
+            </div>
+            <div class="fm-form-field">
+              <label>Location</label>
+              <input type="text" id="te-location" value="Open Office" style="background: #fff; color: #000; border: 1px solid #71717a;">
+            </div>
+            
+            <div class="task-entry-buttons">
+              <button class="fm-action-btn-styled new-btn" onclick="teNewForm()">+ New</button>
+              <button class="fm-action-btn-styled confirm-btn" onclick="teConfirmForm()">Confirm</button>
+              <button class="fm-action-btn-styled delete-btn" onclick="teDeleteForm()">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Tasks Table List and color legend -->
+        <div class="glass-card task-entry-list-panel">
+          <div class="task-entry-header-row">
+            <h3 style="font-size: 16px; font-weight: 700;">Select the request to edit</h3>
+            
+            <div class="fm-legend-box">
+              <div class="legend-item"><span class="legend-dot green"></span> Already Planned</div>
+              <div class="legend-item"><span class="legend-dot red"></span> Deleted By planner</div>
+              <div class="legend-item"><span class="legend-dot yellow"></span> Rework</div>
+              <div class="legend-item"><span class="legend-dot blue"></span> To be planned</div>
+            </div>
+          </div>
+          
+          <div style="flex-grow: 1; overflow-y: auto; margin-top: 16px;">
+            <table class="fm-task-list-table select-task-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Name</th>
+                  <th>Task Type</th>
+                  <th>Description</th>
+                  <th>Urgency</th>
+                  <th>Priority</th>
+                  <th>Due Date</th>
+                  <th>Select</th>
+                </tr>
+              </thead>
+              <tbody id="te-task-list-body">
+                <!-- Dynamic Task items -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PANE 4: Tasks To be Approved (Image 5) -->
+    <section id="pane-tasks-to-approve" class="content-pane">
+      <div class="planning-breakdown-layout">
+        
+        <div class="glass-card planning-header-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+          <div>
+            <h2 style="font-size: 18px; font-weight: 800; color: #1e3a8a;">Tasks To be Approved</h2>
+            <div style="font-size: 12px; color: #4b5563; font-weight: 700; margin-top: 4px;">To be approved / Approved / Not Approved</div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="font-size: 24px; font-weight: 800; color: #dc2626;" id="approve-count-badge">21</div>
+            <button class="planner-btn" style="background: #fff; border: 1px solid #71717a; color: #000; font-weight: 700;" onclick="window.print()">Print Out</button>
+          </div>
+        </div>
+
+        <div class="glass-card planning-table-card" style="flex-grow: 1; display: flex; flex-direction: column;">
+          <div style="flex-grow: 1; overflow-y: auto;">
+            <table class="fm-task-list-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Department</th>
+                  <th>Date Requested</th>
+                  <th>Description</th>
+                  <th>DueDate</th>
+                  <th>Approval</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="approve-table-body">
+                <!-- Dynamic tasks matching Image 5 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PANE 5: Agent WhatsApp Simulator -->
+    <section id="pane-simulator" class="content-pane">
+      <div class="simulator-layout">
+        
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="phone-avatar">RT</div>
+              <div class="phone-contact-info">
+                <div class="phone-contact-name" style="color: #fff;">NITA Dispatcher</div>
+                <div class="phone-contact-status">online • listening...</div>
+              </div>
+            </div>
+            <div class="phone-chat-area" id="chat-messages">
+              <!-- Loaded Welcome messages -->
+            </div>
+            <div class="phone-input-bar">
+              <input type="text" class="phone-input" id="chat-user-input" placeholder="Type a message...">
+              <button class="phone-send-btn" id="btn-send-message">➔</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="simulator-engine-panel">
+          <div class="glass-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="fm-group-title">Scenario Quick Presets</div>
+            <div class="simulator-controls">
+              <button class="sim-scenario-btn" onclick="loadScenario('critical_leak')">
+                <strong>🚨 P0 Critical</strong><br>Grinding noise & line stopped on Circular Knitter.
+              </button>
+              <button class="sim-scenario-btn" onclick="loadScenario('urgent_tension')">
+                <strong>⚡ P1 Urgent</strong><br>Gerber cutter belt slipping on Row 1.
+              </button>
+              <button class="sim-scenario-btn" onclick="loadScenario('normal_cosmetic')">
+                <strong>🟢 P2 Non-Urgent</strong><br>Office door latch broken.
+              </button>
+            </div>
+          </div>
+          
+          <div class="engine-console">
+            <div class="console-header">
+              <div class="console-title">
+                <span class="status-dot"></span>
+                <span>NITA System Logs & Reasoning Steps</span>
+              </div>
+              <button class="planner-btn" style="padding: 4px 8px; font-size: 10px; background: rgba(0,0,0,0.05); border: 1px solid #71717a; color: #000;" onclick="clearConsole()">
+                Clear Logs
+              </button>
+            </div>
+            <div class="console-body" id="console-logs">
+              <!-- Logs -->
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- PANE 6: Technician Daily Dashboard -->
+    <section id="pane-technician-tasks" class="content-pane">
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="glass-card" style="padding: 20px;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">My Dispatched Job Queue</h2>
+          <p style="font-size: 13px; color: #4b5563;">Select active work orders to update your progress directly to the operator's console.</p>
+        </div>
+        
+        <div class="glass-card" style="padding: 20px; flex-grow: 1;">
+          <table class="fm-task-list-table">
+            <thead>
+              <tr>
+                <th>Work Order ID</th>
+                <th>Asset Code</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Lifecycle Action</th>
+              </tr>
+            </thead>
+            <tbody id="tech-jobs-table-body">
+              <!-- JS dynamic loading -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE 7: API Sandbox -->
+    <section id="pane-api" class="content-pane">
+      <div class="api-sandbox-layout">
+        
+        <!-- Mock Address Bar -->
+        <div class="glass-card api-url-bar">
+          <select id="api-endpoint-selector" class="api-method" style="background: #fff; color: #000; border: 1px solid #71717a; padding: 8px 12px; outline: none; cursor: pointer; border-radius: 6px; font-weight: 700;">
+            <option value="api-pending-approvals">GET /api-pending-approvals</option>
+            <option value="api-assets">GET /api-assets</option>
+            <option value="api-find-asset">GET /api-find-asset</option>
+            <option value="api-technicians">GET /api-technicians</option>
+            <option value="api-recommend-technician">GET /api-recommend-technician</option>
+            <option value="api-technician-daily-tasks">GET /api-technician-daily-tasks</option>
+            <option value="api-next-task">GET /api-next-task</option>
+            <option value="api-admin-status">GET /api-admin-status</option>
+            <option value="api-admin-read">GET /api-admin-read</option>
+            <option value="api-task-lifecycle">POST /api-task-lifecycle</option>
+            <option value="api-technician-actions">POST /api-technician-actions</option>
+            <option value="api-admin-assign">POST /api-admin-assign</option>
+            <option value="api-feedback">POST /api-feedback</option>
+            <option value="api-forward-media">POST /api-forward-media</option>
+          </select>
+          <input type="text" class="api-url" id="api-url-input" value="https://bot.nelsonfodjo.me/webhook/api-pending-approvals" readonly style="background: #fff; color: #000;">
+          <button class="api-send-btn" id="btn-run-api">Send Request</button>
+        </div>
+        
+        <div class="api-payloads">
+          <div class="glass-card api-editor-panel">
+            <div class="fm-group-title" id="api-doc-title">API Endpoint Tester</div>
+            <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
+              <div id="api-doc-description" style="font-size: 13px; color: #4b5563; line-height: 1.5; font-family: sans-serif;">
+                Select an endpoint from the top dropdown to view details.
+              </div>
+              <div id="api-inputs-container" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- dynamic inputs -->
+              </div>
+            </div>
+          </div>
+          <div class="api-editor-panel">
+            <div class="fm-group-title">JSON Response (HTTP 200 OK)</div>
+            <div class="api-json-viewer" id="api-response-json" style="background: #0f172a; color: #38bdf8;">
+Click "Send Request" to fetch from database...
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- PANE 8: Relational Database Schema Explorer -->
+    <section id="pane-database" class="content-pane">
+      <div class="db-layout">
+        <div class="glass-card db-list-panel" style="background: #fff;">
+          <div class="fm-dept-header" style="font-family: monospace; font-weight: 700;">Tables</div>
+          <div class="db-list-item active" data-table="department">department</div>
+          <div class="db-list-item" data-table="app_user">app_user</div>
+          <div class="db-list-item" data-table="technician">technician</div>
+          <div class="db-list-item" data-table="asset">asset</div>
+          <div class="db-list-item" data-table="task_request">task_request</div>
+          <div class="db-list-item" data-table="work_order">work_order</div>
+          <div class="db-list-item" data-table="work_order_technician">work_order_technician</div>
+          <div class="db-list-item" data-table="conversation_state">conversation_state</div>
+          <div class="db-list-item" data-table="work_order_feedback">work_order_feedback</div>
+          <div class="db-list-item" data-table="message_log">message_log</div>
+        </div>
+        <div class="glass-card db-table-viewer">
+          <div class="db-schema-header">
+            <h2 class="db-schema-title" id="db-table-title">TABLE department</h2>
+            <span class="status-badge" style="font-family: monospace;" id="db-table-size">4 records</span>
+          </div>
+          <div style="flex-grow: 1; overflow-y: auto;">
+            <table class="db-fields-table">
+              <thead>
+                <tr>
+                  <th>Field Name</th>
+                  <th>Data Type</th>
+                  <th>Key / Constraint</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody id="db-fields-body">
+                <!-- Dynamic Fields -->
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="fm-group-title" style="margin-bottom: 12px;">Relationships</div>
+            <p id="db-relationship-text" style="font-size: 13px; color: #4b5563; font-family: 'JetBrains Mono', monospace;">
+              None
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE 9: Solution Design, Decision Logic, & Impact Docs -->
+    <section id="pane-docs" class="content-pane">
+      <div class="docs-layout">
+        <aside class="docs-toc" style="background: #fff;">
+          <div class="docs-toc-item active" data-doc="design">1. Solution Design</div>
+          <div class="docs-toc-item" data-doc="logic">2. Decision Logic</div>
+          <div class="docs-toc-item" data-doc="model">3. Data Model Analysis</div>
+          <div class="docs-toc-item" data-doc="impact">4. Business Impact</div>
+        </aside>
+        <article class="glass-card docs-content" id="docs-viewport">
+          <!-- Dynamic Markdown Content -->
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
