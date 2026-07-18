@@ -194,10 +194,89 @@ function fireSupabase(method, table, body, query) {
   });
 }
 
+// ------------------------------------------------------------
+// NITA API Client (bot.nelsonfodjo.me/webhook/)
+// ------------------------------------------------------------
+const NITA_API = {
+  base() { return (window.NITA_CONFIG?.NITA_API_URL || 'https://bot.nelsonfodjo.me/webhook').replace(/\/$/, ''); },
+
+  async get(path, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const url = `${this.base()}${path}${qs ? '?' + qs : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`NITA API ${path}: ${res.status}`);
+    return res.json();
+  },
+
+  async post(path, body) {
+    const url = `${this.base()}${path}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`NITA API ${path}: ${res.status}`);
+    return res.json();
+  },
+
+  // 1. Get Asset
+  getAsset(code) { return this.get('/api-assets', { code }); },
+
+  // 2. Find Asset
+  findAsset(location, keyword) { return this.get('/api-find-asset', { location, keyword }); },
+
+  // 3. Find Technicians
+  findTechnicians(trade) { return this.get('/api-technicians', { trade }); },
+
+  // 4. Recommend Technician
+  recommendTechnician(trade) { return this.get('/api-recommend-technician', { trade }); },
+
+  // 5. Task Lifecycle
+  createTask(payload) { return this.post('/api-task-lifecycle', { action: 'create', ...payload }); },
+  approveTask(payload) { return this.post('/api-task-lifecycle', { action: 'approve', ...payload }); },
+  rejectTask(payload) { return this.post('/api-task-lifecycle', { action: 'reject', ...payload }); },
+
+  // 6. Technician Actions
+  technicianAction(work_order_id, technician_phone, action) {
+    return this.post('/api-technician-actions', { work_order_id, technician_phone, action });
+  },
+
+  // 7. Technician Daily Tasks
+  getTechnicianTasks(technician_id) { return this.get('/api-technician-daily-tasks', { technician_id }); },
+
+  // 8. Next Task
+  getNextTask(technician_id) { return this.get('/api-next-task', { technician_id }); },
+
+  // 9. Admin Assign
+  adminAssign(payload) { return this.post('/api-admin-assign', payload); },
+
+  // 10. Pending Approvals
+  getPendingApprovals() { return this.get('/api-pending-approvals'); },
+
+  // 11. Admin Status
+  getAdminStatus() { return this.get('/api-admin-status'); },
+
+  // 12. Admin Read
+  adminRead(table, filterField, filterValue, limit) {
+    const params = { table, limit: String(limit || 50) };
+    if (filterField) params.filter_field = filterField;
+    if (filterValue) params.filter_value = filterValue;
+    return this.get('/api-admin-read', params);
+  },
+
+  // 13. Submit Feedback
+  submitFeedback(payload) { return this.post('/api-feedback', payload); },
+
+  // 14. Forward Media
+  forwardMedia(payload) { return this.post('/api-forward-media', payload); }
+};
+
 async function syncWithSupabase() {
   if (!window.NITA_CONFIG || !window.NITA_CONFIG.USE_REAL_SUPABASE) return;
   try {
-    const [tasks, orders, assignments, dbDepts, dbAssets, dbTechs] = await Promise.all([
+    // Use NITA API for admin reads where possible, fall back to direct Supabase
+    const [pendingResult, tasks, orders, assignments, dbDepts, dbAssets, dbTechs] = await Promise.allSettled([
+      NITA_API.getPendingApprovals().catch(() => null),
       fetchSupabase('task_request', 'GET', null, 'select=*'),
       fetchSupabase('work_order', 'GET', null, 'select=*'),
       fetchSupabase('work_order_technician', 'GET', null, 'select=*'),
@@ -206,41 +285,50 @@ async function syncWithSupabase() {
       fetchSupabase('technician', 'GET', null, 'select=*')
     ]);
     
-    if (tasks) taskRequests = tasks;
-    if (orders) workOrders = orders;
-    if (assignments) workOrderTechnicians = assignments;
+    const tasksVal = tasks.status === 'fulfilled' ? tasks.value : null;
+    const ordersVal = orders.status === 'fulfilled' ? orders.value : null;
+    const assignmentsVal = assignments.status === 'fulfilled' ? assignments.value : null;
     
-    if (dbDepts) {
-      departments = dbDepts.map(d => ({
+    if (tasksVal) taskRequests = tasksVal;
+    if (ordersVal) workOrders = ordersVal;
+    if (assignmentsVal) workOrderTechnicians = assignmentsVal;
+    
+    const dbDeptsVal = dbDepts.status === 'fulfilled' ? dbDepts.value : null;
+    const dbAssetsVal = dbAssets.status === 'fulfilled' ? dbAssets.value : null;
+    const dbTechsVal = dbTechs.status === 'fulfilled' ? dbTechs.value : null;
+    
+    if (dbDeptsVal) {
+      departments = dbDeptsVal.map(d => ({
         id: d.department_id,
         name: d.name,
-        location: d.location
+        location: d.location || ''
       }));
     }
     
-    if (dbAssets) {
-      assets = dbAssets.map(a => ({
-        asset_id: a.asset_id,
-        asset_code: a.asset_code,
+    if (dbAssetsVal) {
+      assets = dbAssetsVal.map(a => ({
+        code: a.asset_code,
         name: a.name,
         status: a.status,
         location: a.location,
-        required_trade: a.required_trade || 'general'
+        dept_id: a.dept_id,
+        type: a.type || 'Production Loom',
+        serial: a.serial || ''
       }));
     }
     
-    if (dbTechs) {
-      technicians = dbTechs.map(t => ({
-        technician_id: t.technician_id,
-        user_id: t.user_id,
-        full_name: t.full_name,
+    if (dbTechsVal) {
+      technicians = dbTechsVal.map(t => ({
+        id: t.technician_id,
+        name: t.full_name,
         trade: t.trade,
         active: t.active,
-        workload: 0
+        workload: t.workload || 0
       }));
     }
     
     rebuildLookupCaches();
+    populateSignupDepartments(true);
     
     renderFmDashboard();
     renderTaskEntryTable();
@@ -326,13 +414,24 @@ function toggleSignupFields() {
 }
 window.toggleSignupFields = toggleSignupFields;
 
-function populateSignupDepartments() {
+function populateSignupDepartments(force = false) {
   const select = document.getElementById('auth-signup-dept');
-  if (!select || select.children.length > 0) return; // Already populated
+  if (!select) return;
+  if (select.children.length > 0 && !force) return;
+  
+  select.innerHTML = '';
+  
+  if (departments.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = "";
+    opt.textContent = "No departments found (Seed DB)";
+    select.appendChild(opt);
+    return;
+  }
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
-    opt.value = dept.department_id;
+    opt.value = dept.id;
     opt.textContent = dept.name;
     select.appendChild(opt);
   });
@@ -894,9 +993,25 @@ function teConfirmForm() {
     };
 
     if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-      fetchSupabase('task_request', 'POST', body)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Task creation failed: ${err.message}`, 'error'));
+      // Use NITA API to create task
+      NITA_API.createTask({
+        asset_code: code,
+        created_by_phone: activeSession?.phone || '+23052000101',
+        description: desc,
+        priority: priority,
+        task_type: priority === 0 ? 'emergency' : 'repair'
+      }).then(result => {
+        if (!result.error) {
+          if (result.is_duplicate) {
+            addLog(`Duplicate task detected: ${result.existing_task_id}`, 'warn');
+          } else {
+            addLog(`Task created via NITA API: ${result.task_request_id}`, 'success');
+          }
+        } else {
+          addLog(`NITA API task creation failed: ${result.message}`, 'error');
+        }
+        syncWithSupabase();
+      }).catch(err => addLog(`Task creation failed: ${err.message}`, 'error'));
     } else {
       taskRequests.unshift(body);
       saveDB();
@@ -1087,13 +1202,21 @@ document.getElementById('btn-pb-dispatch-engineer')?.addEventListener('click', (
   };
 
   if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-    fetchSupabase('task_request', 'PATCH', {
-      status: 'approved'
-    }, `task_request_id=eq.${targetTask.task_request_id}`)
-      .then(() => fetchSupabase('work_order', 'POST', wo))
-      .then(() => fetchSupabase('work_order_technician', 'POST', assign))
-      .then(() => syncWithSupabase())
-      .catch(err => addLog(`Dispatch failed: ${err.message}`, 'error'));
+    // Use NITA API approve endpoint which creates work order + assignment
+    NITA_API.approveTask({
+      task_id: targetTask.task_request_id,
+      approved_by_phone: activeSession?.phone || '+23054737266',
+      technician_id: techId,
+      recommended_technician_id: techId,
+      recommendation_reason: `Assigned by coordinator on ${start}`
+    }).then(result => {
+      if (!result.error) {
+        addLog(`Dispatched via NITA API. Work order: ${result.work_order_id}`, 'success');
+      } else {
+        addLog(`NITA API dispatch failed: ${result.message}`, 'error');
+      }
+      syncWithSupabase();
+    }).catch(err => addLog(`Dispatch failed: ${err.message}`, 'error'));
   } else {
     targetTask.status = 'approved';
     workOrders.push(wo);
@@ -1168,32 +1291,34 @@ function dispatchDirectApproval(id, action) {
 
   if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
     if (action === 'approve') {
-      fetchSupabase('task_request', 'PATCH', {
-        status: 'approved',
-        approved_at: new Date().toISOString(),
-        approved_by_user_id: activeSession?.user_id || 'aa3a190a-dbca-49d7-84fe-19a9dcf18f03'
-      }, `task_request_id=eq.${id}`)
-        .then(() => {
-          const woId = generateId('wo');
-          return fetchSupabase('work_order', 'POST', {
-            work_order_id: woId,
-            task_request_id: id,
-            status: 'pending',
-            priority: task.priority,
-            scheduled_start: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            completed_at: null
-          });
-        })
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Approval dispatch failed: ${err.message}`, 'error'));
+      // Use NITA API to approve and auto-dispatch
+      NITA_API.approveTask({
+        task_id: id,
+        approved_by_phone: activeSession?.phone || '+23054737266',
+        technician_id: TECH_ID_MAP[activeSession?.phone || ''] || '1c60280b-4c7f-4996-a827-56b6b4113760',
+        recommended_technician_id: TECH_ID_MAP[activeSession?.phone || ''] || '1c60280b-4c7f-4996-a827-56b6b4113760',
+        recommendation_reason: 'Auto-dispatched from approval dashboard'
+      }).then(result => {
+        if (!result.error) {
+          addLog(`Task ${id} approved via NITA API. WO: ${result.work_order_id}`, 'success');
+        } else {
+          addLog(`NITA API approval failed: ${result.message}`, 'error');
+        }
+        syncWithSupabase();
+      }).catch(err => addLog(`Approval failed: ${err.message}`, 'error'));
     } else {
-      fetchSupabase('task_request', 'PATCH', {
-        status: 'rejected',
-        rejection_reason: "Rejected from approval dashboard list."
-      }, `task_request_id=eq.${id}`)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Rejection failed: ${err.message}`, 'error'));
+      NITA_API.rejectTask({
+        task_id: id,
+        approved_by_phone: activeSession?.phone || '+23054737266',
+        reason: 'Rejected from approval dashboard'
+      }).then(result => {
+        if (!result.error) {
+          addLog(`Task ${id} rejected via NITA API.`, 'success');
+        } else {
+          addLog(`NITA API rejection failed: ${result.message}`, 'error');
+        }
+        syncWithSupabase();
+      }).catch(err => addLog(`Rejection failed: ${err.message}`, 'error'));
     }
   } else {
     if (action === 'approve') {
@@ -1355,22 +1480,17 @@ function techUpdateJob(woId, action) {
   if (!wo) return;
 
   if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-    if (action === 'start') {
-      fetchSupabase('work_order', 'PATCH', { status: 'in_progress' }, `work_order_id=eq.${woId}`)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Start job failed: ${err.message}`, 'error'));
-    } else if (action === 'done') {
-      fetchSupabase('work_order', 'PATCH', {
-        status: 'completed',
-        completed_at: new Date().toISOString()
-      }, `work_order_id=eq.${woId}`)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Complete job failed: ${err.message}`, 'error'));
-    } else if (action === 'decline') {
-      fetchSupabase('work_order_technician', 'PATCH', { status: 'declined' }, `work_order_id=eq.${woId}`)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`Decline job failed: ${err.message}`, 'error'));
-    }
+    // Use NITA API technician actions endpoint
+    NITA_API.technicianAction(woId, activeSession?.phone || '', action)
+      .then(result => {
+        if (!result.error) {
+          addLog(`[Tech] ${action} work_order ${woId}: ${result.message}`, 'success');
+        } else {
+          addLog(`[Tech] ${action} failed: ${result.message}`, 'error');
+        }
+        syncWithSupabase();
+      })
+      .catch(err => addLog(`[Tech] ${action} failed: ${err.message}`, 'error'));
   } else {
     if (action === 'start') {
       wo.status = 'in_progress';
@@ -1553,9 +1673,25 @@ function processUserMessage(text) {
     };
 
     if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
-      fetchSupabase('task_request', 'POST', newTask)
-        .then(() => syncWithSupabase())
-        .catch(err => addLog(`WhatsApp task creation failed: ${err.message}`, 'error'));
+      // Use NITA API to create task
+      NITA_API.createTask({
+        asset_code: assetCode,
+        created_by_phone: activeSession?.phone || '+23052000101',
+        description: text,
+        priority: priority,
+        task_type: priority === 0 ? 'emergency' : 'repair'
+      }).then(result => {
+        if (!result.error) {
+          if (result.is_duplicate) {
+            addLog(`Duplicate task detected: ${result.existing_task_id}`, 'warn');
+          } else {
+            addLog(`Task created via NITA API: ${result.task_request_id}`, 'success');
+          }
+        } else {
+          addLog(`NITA API task creation failed: ${result.message}`, 'error');
+        }
+        syncWithSupabase();
+      }).catch(err => addLog(`WhatsApp task creation failed: ${err.message}`, 'error'));
     } else {
       taskRequests.unshift(newTask);
       saveDB();
@@ -1732,22 +1868,49 @@ function setupAPITester() {
     updateEndpointForm(apiEndpointSelector.value);
   });
   
-  btnRunApi?.addEventListener('click', () => {
+  btnRunApi?.addEventListener('click', async () => {
     const key = apiEndpointSelector.value;
     const config = SANDBOX_ENDPOINTS[key];
-    if (config) {
-      const inputs = {};
-      if (apiInputsContainer) {
-        const fields = apiInputsContainer.querySelectorAll('input, select');
-        fields.forEach(f => {
-          inputs[f.id] = f.value;
-        });
+    if (!config) return;
+
+    const inputs = {};
+    if (apiInputsContainer) {
+      const fields = apiInputsContainer.querySelectorAll('input, select');
+      fields.forEach(f => { inputs[f.id] = f.value; });
+    }
+
+    // Call real NITA API when available
+    if (window.NITA_CONFIG?.NITA_API_URL) {
+      if (apiResponseJson) apiResponseJson.textContent = 'Calling NITA API...';
+      try {
+        let result;
+        switch (key) {
+          case 'api-pending-approvals': result = await NITA_API.getPendingApprovals(); break;
+          case 'api-assets': result = await NITA_API.getAsset(inputs['param-asset-code'] || '39'); break;
+          case 'api-find-asset': result = await NITA_API.findAsset(inputs['param-find-loc'] || '', inputs['param-find-key'] || ''); break;
+          case 'api-technicians': result = await NITA_API.findTechnicians(inputs['param-tech-trade'] || 'mechanic'); break;
+          case 'api-recommend-technician': result = await NITA_API.recommendTechnician(inputs['param-rec-trade'] || 'mechanic'); break;
+          case 'api-technician-daily-tasks': result = await NITA_API.getTechnicianTasks(inputs['param-daily-tech-id'] || ''); break;
+          case 'api-next-task': result = await NITA_API.getNextTask(inputs['param-next-tech-id'] || ''); break;
+          case 'api-admin-status': result = await NITA_API.getAdminStatus(); break;
+          case 'api-admin-read': result = await NITA_API.adminRead(inputs['param-read-table'] || 'technician'); break;
+          case 'api-task-lifecycle': result = await NITA_API.createTask({ asset_code: inputs['param-asset-code'] || '39', created_by_phone: inputs['param-created-phone'] || '+23052000101', description: inputs['param-description'] || 'Test task', priority: parseInt(inputs['param-priority'] || '2'), task_type: 'repair' }); break;
+          case 'api-technician-actions': result = await NITA_API.technicianAction(inputs['param-wo-id'] || '', inputs['param-tech-phone'] || '', inputs['param-action'] || 'start'); break;
+          case 'api-admin-assign': result = await NITA_API.adminAssign({ admin_phone: inputs['param-admin-phone'] || '+23054737266', asset_code: inputs['param-asset-code'] || '39', technician_id: inputs['param-tech-id'] || '', instructions: inputs['param-instructions'] || '' }); break;
+          case 'api-feedback': result = await NITA_API.submitFeedback({ work_order_id: inputs['param-wo-id'] || '', feedback_type: 'text', feedback_text: inputs['param-feedback-text'] || 'Good service', derived_sentiment: 'positive', derived_rating: 5, key_issues: [], rated_by_phone: inputs['param-rated-phone'] || '+23052000101' }); break;
+          case 'api-forward-media': result = await NITA_API.forwardMedia({ task_id: inputs['param-task-id'] || '', recipient_phone: inputs['param-recipient-phone'] || '' }); break;
+          default: result = config.handler(inputs);
+        }
+        if (apiResponseJson) apiResponseJson.textContent = JSON.stringify(result, null, 2);
+        addLog(`NITA API: ${key}`, "success");
+      } catch (err) {
+        if (apiResponseJson) apiResponseJson.textContent = JSON.stringify({ error: true, message: err.message }, null, 2);
+        addLog(`NITA API error: ${err.message}`, "error");
       }
-      
+    } else {
+      // Fallback to local mock handler
       const response = config.handler(inputs);
-      if (apiResponseJson) {
-        apiResponseJson.textContent = JSON.stringify(response, null, 2);
-      }
+      if (apiResponseJson) apiResponseJson.textContent = JSON.stringify(response, null, 2);
       addLog(`Mock executed API endpoint: ${key.toUpperCase()}`, "success");
     }
   });

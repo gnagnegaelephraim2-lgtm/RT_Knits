@@ -312,37 +312,38 @@ async function syncWithSupabase(): Promise<void> {
     if (orders) workOrders = orders;
     if (assignments) workOrderTechnicians = assignments;
     
-    if (dbDepts) {
+        if (dbDepts) {
       departments = dbDepts.map((d: any) => ({
         id: d.department_id,
         name: d.name,
-        location: d.location
+        location: d.location || ''
       }));
     }
     
     if (dbAssets) {
       assets = dbAssets.map((a: any) => ({
-        asset_id: a.asset_id,
-        asset_code: a.asset_code,
+        code: a.asset_code,
         name: a.name,
         status: a.status,
         location: a.location,
-        required_trade: a.required_trade || 'general'
+        dept_id: a.dept_id,
+        type: a.type || 'Production Loom',
+        serial: a.serial || ''
       }));
     }
     
     if (dbTechs) {
       technicians = dbTechs.map((t: any) => ({
-        technician_id: t.technician_id,
-        user_id: t.user_id,
-        full_name: t.full_name,
+        id: t.technician_id,
+        name: t.full_name,
         trade: t.trade,
         active: t.active,
-        workload: 0
+        workload: t.workload || 0
       }));
     }
     
     rebuildLookupCaches();
+    populateSignupDepartments(true);
     
     // Refresh GUI
     renderFmDashboard();
@@ -430,13 +431,24 @@ function toggleSignupFields(): void {
 }
 (window as any).toggleSignupFields = toggleSignupFields;
 
-function populateSignupDepartments(): void {
+function populateSignupDepartments(force = false): void {
   const select = document.getElementById('auth-signup-dept') as HTMLSelectElement;
-  if (!select || select.children.length > 0) return; // Already populated
+  if (!select) return;
+  if (select.children.length > 0 && !force) return;
+  
+  select.innerHTML = '';
+  
+  if (departments.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = "";
+    opt.textContent = "No departments found (Seed DB)";
+    select.appendChild(opt);
+    return;
+  }
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
-    opt.value = dept.department_id;
+    opt.value = dept.id;
     opt.textContent = dept.name;
     select.appendChild(opt);
   });

@@ -10,5 +10,8 @@ window.NITA_CONFIG = {
   SUPABASE_URL: "https://zemhcqrnlfikvtgknqjp.supabase.co",
 
   // Your Supabase anon/publishable key
-  SUPABASE_ANON_KEY: "sb_publishable_-MD1kTyYaUY9NR4ldDDHAw_RZ1SFTTx"
+  SUPABASE_ANON_KEY: "sb_publishable_-MD1kTyYaUY9NR4ldDDHAw_RZ1SFTTx",
+
+  // NITA API Backend (n8n webhook)
+  NITA_API_URL: "https://bot.nelsonfodjo.me/webhook"
 };
