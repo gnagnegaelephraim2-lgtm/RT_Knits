@@ -1,0 +1,26 @@
+{
+  "+23052000101": {
+    "phone_number": "+23052000101",
+    "pin_hash": "0ffe1abd1a08215353c233d6e009613e95eec4253832a761af28ff37ac5a150c",
+    "role": "operator",
+    "full_name": "Priya Singh"
+  },
+  "+23057551012": {
+    "phone_number": "+23057551012",
+    "pin_hash": "edee29f882543b956620b26d0ee0e7e950399b1c4222f5de05e06425b4c995e9",
+    "role": "technician",
+    "full_name": "Jean-Marc Rughoo"
+  },
+  "+23054737266": {
+    "phone_number": "+23054737266",
+    "pin_hash": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "role": "coordinator",
+    "full_name": "Nelson Fodjo"
+  },
+  "+23059999999": {
+    "phone_number": "+23059999999",
+    "pin_hash": "c1f330d0aff31c1c87403f1e4347bcc21aff7c179908723535f2b31723702525",
+    "role": "operator",
+    "full_name": "Test User"
+  }
+}

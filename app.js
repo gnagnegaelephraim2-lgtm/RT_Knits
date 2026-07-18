@@ -414,9 +414,15 @@ function toggleSignupFields() {
 }
 window.toggleSignupFields = toggleSignupFields;
 
-function populateSignupDepartments() {
+function populateSignupDepartments(force) {
   const select = document.getElementById('auth-signup-dept');
-  if (!select || select.children.length > 0) return; // Already populated
+  if (!select) return;
+  
+  // Clear and repopulate if empty or forced
+  if (!force && select.children.length > 1) return;
+  
+  // Keep the first placeholder option if it exists, otherwise add one
+  select.innerHTML = '<option value="">Select Department</option>';
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
@@ -521,6 +527,11 @@ function initAuthGate() {
     
     if (!nameInput || !phoneInput || !pinInput) {
       alert("All fields are required.");
+      return;
+    }
+    
+    if (!deptInput) {
+      alert("Please select a department.");
       return;
     }
     

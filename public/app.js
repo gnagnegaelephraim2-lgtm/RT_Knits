@@ -414,24 +414,19 @@ function toggleSignupFields() {
 }
 window.toggleSignupFields = toggleSignupFields;
 
-function populateSignupDepartments(force = false) {
+function populateSignupDepartments(force) {
   const select = document.getElementById('auth-signup-dept');
   if (!select) return;
-  if (select.children.length > 0 && !force) return;
   
-  select.innerHTML = '';
+  // Clear and repopulate if empty or forced
+  if (!force && select.children.length > 1) return;
   
-  if (departments.length === 0) {
-    const opt = document.createElement('option');
-    opt.value = "";
-    opt.textContent = "No departments found (Seed DB)";
-    select.appendChild(opt);
-    return;
-  }
+  // Keep the first placeholder option if it exists, otherwise add one
+  select.innerHTML = '<option value="">Select Department</option>';
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
-    opt.value = dept.id;
+    opt.value = dept.department_id;
     opt.textContent = dept.name;
     select.appendChild(opt);
   });
@@ -532,6 +527,11 @@ function initAuthGate() {
     
     if (!nameInput || !phoneInput || !pinInput) {
       alert("All fields are required.");
+      return;
+    }
+    
+    if (!deptInput) {
+      alert("Please select a department.");
       return;
     }
     
