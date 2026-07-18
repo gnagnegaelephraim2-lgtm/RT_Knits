@@ -1,12 +1,17 @@
 // ============================================================
 // RT KNITS — PRODUCTION DATABASE INTEGRATION CONFIG
 // ============================================================
+// FILL IN your Supabase project values, then set USE_REAL_SUPABASE to true.
+// Find these in: Supabase Dashboard > Settings > API
+// ============================================================
 
 window.NITA_CONFIG = {
-  // Change to true to disable localStorage mock and enable live Supabase connections!
+  // Set to true to enable live Supabase database (production mode)
   USE_REAL_SUPABASE: false,
 
-  // Paste your Supabase project parameters here:
+  // Your Supabase project URL (e.g. https://abcdef.supabase.co)
   SUPABASE_URL: "https://your-project-id.supabase.co",
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  // Your Supabase anon/public key (starts with eyJ...)
+  SUPABASE_ANON_KEY: "your-supabase-anon-key-here"
 };
