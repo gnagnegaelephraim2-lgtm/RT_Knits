@@ -442,11 +442,18 @@ function initAuthGate() {
   }
 
   document.getElementById('btn-login-submit')?.addEventListener('click', async () => {
-    const phoneInput = document.getElementById('auth-phone').value.trim();
+    const rawPhone = document.getElementById('auth-phone').value.trim();
     const pinInput = document.getElementById('auth-pin').value.trim();
     
-    if (!phoneInput || !pinInput) {
+    if (!rawPhone || !pinInput) {
       alert("Please enter phone number and PIN.");
+      return;
+    }
+
+    const phoneInput = normalizeWhatsAppPhone(rawPhone);
+    const phoneRegex = /^\+[1-9]\d{6,14}$/;
+    if (!phoneRegex.test(phoneInput)) {
+      alert("Invalid WhatsApp number format. Please enter a valid number starting with '+' (e.g., +23058589024).");
       return;
     }
 
@@ -519,13 +526,13 @@ function initAuthGate() {
 
   document.getElementById('btn-signup-submit')?.addEventListener('click', async () => {
     const nameInput = document.getElementById('auth-signup-name').value.trim();
-    const phoneInput = document.getElementById('auth-signup-phone').value.trim();
+    const rawPhone = document.getElementById('auth-signup-phone').value.trim();
     const roleInput = document.getElementById('auth-signup-role').value;
     const deptInput = document.getElementById('auth-signup-dept').value;
     const tradeInput = document.getElementById('auth-signup-trade').value;
     const pinInput = document.getElementById('auth-signup-pin').value.trim();
     
-    if (!nameInput || !phoneInput || !pinInput) {
+    if (!nameInput || !rawPhone || !pinInput) {
       alert("All fields are required.");
       return;
     }
@@ -534,11 +541,11 @@ function initAuthGate() {
       alert("Please select a department.");
       return;
     }
-    
-    // E.164 phone format validation
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+
+    const phoneInput = normalizeWhatsAppPhone(rawPhone);
+    const phoneRegex = /^\+[1-9]\d{6,14}$/;
     if (!phoneRegex.test(phoneInput)) {
-      alert("Invalid phone format. Please use E.164 format (+XXXXXXXXXXX).");
+      alert("Invalid WhatsApp number format. Please enter a valid number starting with '+' (e.g., +23058589024).");
       return;
     }
     
@@ -558,6 +565,13 @@ function initAuthGate() {
     if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
       // Production Supabase flow
       try {
+        // Validate user existence first
+        const existingUsers = await fetchSupabase('app_user', 'GET', null, `phone_number=eq.${encodeURIComponent(phoneInput)}`);
+        if (existingUsers && existingUsers.length > 0) {
+          alert("This phone number is already registered. Please sign in instead.");
+          return;
+        }
+
         const userId = generateId('user');
         const newUser = {
           user_id: userId,
@@ -667,6 +681,24 @@ function initAuthGate() {
     showAuthOverlay(true);
     addLog(`Coordinator logout requested. Session tokens cleared.`, 'info');
   });
+}
+
+// Normalizes phone input for WhatsApp CMMS (e.g. 58589024 -> +23058589024)
+function normalizeWhatsAppPhone(phone) {
+  let clean = phone.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+  if (!clean.startsWith('+')) {
+    // If it starts with a country code (like '230') but no plus, prepend '+'
+    if (clean.startsWith('230') && clean.length > 8) {
+      clean = '+' + clean;
+    } else if (clean.length === 8 && (clean.startsWith('5') || clean.startsWith('7') || clean.startsWith('9') || clean.startsWith('6'))) {
+      // Auto-prepend Mauritius country code +230 for 8-digit mobile numbers
+      clean = '+230' + clean;
+    } else {
+      // Prepend plus if they just forgot it but typed a country code
+      clean = '+' + clean;
+    }
+  }
+  return clean;
 }
 
 // SHA-256 helper — returns 64-char lowercase hex
