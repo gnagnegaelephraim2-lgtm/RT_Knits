@@ -39,14 +39,19 @@ function generateId(prefix: string): string {
 // ------------------------------------------------------------
 // Utility: Cached asset/dept lookups (O(1) instead of O(n) per render)
 // ------------------------------------------------------------
-const assetMap = new Map<string, Asset>();
+const assetMap = new Map<string, Asset>();       // keyed by asset_code
+const assetIdMap = new Map<string, Asset>();     // keyed by asset_id (UUID)
 const deptMap = new Map<string, Department>();
 
 function rebuildLookupCaches(): void {
   assetMap.clear();
+  assetIdMap.clear();
   deptMap.clear();
-  for (const a of assets) assetMap.set(a.code, a);
-  for (const d of departments) deptMap.set(d.id, d);
+  for (const a of assets) {
+    assetMap.set(a.asset_code, a);
+    assetIdMap.set(a.asset_id, a);
+  }
+  for (const d of departments) deptMap.set(d.department_id, d);
 }
 rebuildLookupCaches();
 
@@ -54,29 +59,28 @@ rebuildLookupCaches();
 // Interfaces and Type Definitions
 // ------------------------------------------------------------
 interface Department {
-  id: string;
+  department_id: string;
   name: string;
-  location: string;
 }
 
 interface Asset {
-  code: string;
+  asset_id: string;
+  asset_code: string;
   name: string;
   status: string;
   location: string;
-  dept_id: string;
-  type: string;
-  serial: string;
+  required_trade: string;
 }
 
 type TradeType = 'mechanic' | 'electrician' | 'welder' | 'plumber' | 'hvac' | 'general';
 
 interface Technician {
-  id: string;
-  name: string;
+  technician_id: string;
+  user_id: string;
+  full_name: string;
   trade: TradeType;
   active: boolean;
-  workload: number;
+  workload?: number; // Computed from work_order_technician assignments
 }
 
 interface TaskRequest {
@@ -92,9 +96,8 @@ interface TaskRequest {
   approved_at: string | null;
   rejection_reason: string | null;
   media_urls: string[];
-  planned_start_date?: string;
-  planned_finish_date?: string;
-  due_date?: string;
+  required_trade?: string;
+  created_by_role?: string;
 }
 
 interface WorkOrder {
@@ -105,9 +108,8 @@ interface WorkOrder {
   scheduled_start: string;
   created_at: string;
   completed_at: string | null;
-  duration_mins?: number;
-  person_in_charge?: string;
-  person_in_charge2?: string;
+  recommended_technician_id?: string;
+  recommendation_reason?: string;
 }
 
 interface WorkOrderTechnician {
@@ -115,6 +117,8 @@ interface WorkOrderTechnician {
   technician_id: string;
   assigned_at: string;
   status: string;
+  start_time?: string;
+  stop_time?: string;
 }
 
 interface ChatMessage {
@@ -165,90 +169,86 @@ const TECH_ID_MAP: Record<string, string> = {
 // Initial Mock Database Records
 // ------------------------------------------------------------
 let departments: Department[] = [
-  { id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", name: "Knitting Floor", location: "Knitting Floor, Row 3" },
-  { id: "d27a1921-9922-4a0b-8cf2-ab9964a2b91c", name: "Cutting Department", location: "Cutting Department, Row 1" },
-  { id: "e12a95c9-ca5e-436e-bcfc-843de9c1629d", name: "Engineering Division", location: "Building B, Ground Floor" },
-  { id: "a56c4d7f-22a0-47bf-b30f-b28098c4f9a0", name: "Canteen & Admin Area", location: "Main Administration Block" },
-  { id: "b28c03e8-55fa-4c4f-9efd-a9121aef42f0", name: "Central Stores", location: "Warehouse Area, Row 2" }
+  { department_id: "3c30524e-3011-4cbc-af09-459507cc259d", name: "Knitting Floor" },
+  { department_id: "fcf8a38e-8b8c-484f-ad34-b8996002275c", name: "Cutting Department" },
+  { department_id: "f3791e17-7463-4084-b721-0bb9e9b014a2", name: "Engineering Division" },
+  { department_id: "ec97521a-bdfd-4a14-a53f-515c1b1ecec1", name: "Canteen & Admin Area" },
+  { department_id: "12a67ad8-60a1-49ee-a6fa-c6a6676d161b", name: "Central Stores" }
 ];
 
 let assets: Asset[] = [
-  { code: "39", name: "Circular Knitter — Brother CK-8", status: "down", location: "Knitting Floor, Row 3", dept_id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", type: "Production Loom", serial: "SN-9983-CK" },
-  { code: "175", name: "Cutting Machine — Gerber Z1", status: "in_use", location: "Cutting Department, Row 1", dept_id: "d27a1921-9922-4a0b-8cf2-ab9964a2b91c", type: "Gerber Precision", serial: "SN-8822-GZ" },
-  { code: "42", name: "Sewing Machine — Juki DDL-9000", status: "in_use", location: "Knitting Floor, Row 1", dept_id: "f83b190a-dbca-49d7-84fe-19a9dcf18f29", type: "Utility Equipment", serial: "SN-1022-JK" },
-  { code: "109", name: "Air Compressor — Atlas Copco", status: "maintenance", location: "Building B, Ground Floor", dept_id: "e12a95c9-ca5e-436e-bcfc-843de9c1629d", type: "Pneumatics", serial: "SN-3049-AC" },
-  { code: "88", name: "Steam Boiler — LTK-400", status: "in_use", location: "Warehouse Area, Row 2", dept_id: "b28c03e8-55fa-4c4f-9efd-a9121aef42f0", type: "Utilities Boiler", serial: "SN-7742-LT" }
+  { asset_id: "87ca0eac-e8b6-4d46-8262-314699b8a854", asset_code: "39", name: "Circular Knitter — Brother CK-8", status: "in_use", location: "Knitting Floor, Row 3", required_trade: "mechanic" },
+  { asset_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", asset_code: "175", name: "Cutting Machine — Gerber Z1", status: "in_use", location: "Cutting Department, Row 1", required_trade: "mechanic" },
+  { asset_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901", asset_code: "42", name: "Sewing Machine — Juki DDL-9000", status: "in_use", location: "Knitting Floor, Row 1", required_trade: "mechanic" },
+  { asset_id: "c3d4e5f6-a7b8-9012-cdef-123456789012", asset_code: "109", name: "Air Compressor — Atlas Copco", status: "maintenance", location: "Building B, Ground Floor", required_trade: "mechanic" },
+  { asset_id: "d4e5f6a7-b8c9-0123-defa-234567890123", asset_code: "88", name: "Steam Boiler — LTK-400", status: "in_use", location: "Warehouse Area, Row 2", required_trade: "mechanic" }
 ];
 
 let technicians: Technician[] = [
-  { id: "tech-1", name: "Jean-Marc Rughoo", trade: "mechanic", active: true, workload: 1 },
-  { id: "tech-2", name: "Priya Singh", trade: "mechanic", active: true, workload: 0 },
-  { id: "tech-3", name: "Avinash Kowlessur", trade: "electrician", active: true, workload: 2 },
-  { id: "tech-4", name: "Rishi Gopaul", trade: "welder", active: true, workload: 0 },
-  { id: "tech-5", name: "Farhan Ally", trade: "hvac", active: false, workload: 0 }
+  { technician_id: "1c60280b-4c7f-4996-a827-56b6b4113760", user_id: "eb5ccc36-7c3f-4862-a795-4f1152b90006", full_name: "Nelson Fodjo", trade: "mechanic", active: true, workload: 0 },
+  { technician_id: "tech-2", user_id: "user-2", full_name: "Priya Singh", trade: "mechanic", active: true, workload: 0 },
+  { technician_id: "tech-3", user_id: "user-3", full_name: "Avinash Kowlessur", trade: "electrician", active: true, workload: 0 },
+  { technician_id: "tech-4", user_id: "user-4", full_name: "Rishi Gopaul", trade: "welder", active: true, workload: 0 },
+  { technician_id: "tech-5", user_id: "user-5", full_name: "Farhan Ally", trade: "hvac", active: false, workload: 0 }
 ];
 
 // Initial Tasks
 let taskRequests: TaskRequest[] = [
   {
     task_request_id: "379555",
-    asset_id: "39",
+    asset_id: "87ca0eac-e8b6-4d46-8262-314699b8a854",
     created_by_user_id: "jeanphillipe",
     status: "pending_approval",
     priority: 0,
     requested_at: "2025-12-15T09:12:00.000Z",
     description: "Rewinding machine ground floor to install two line wires to slide air pressure.",
-    task_type: "New Task",
+    task_type: "repair",
     approved_by_user_id: null,
     approved_at: null,
     rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-12-15"
+    media_urls: []
   },
   {
     task_request_id: "379636",
-    asset_id: "175",
+    asset_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     created_by_user_id: "admin",
     status: "pending_approval",
     priority: 1,
     requested_at: "2026-06-29T08:45:00.000Z",
     description: "Piping for combiwash + CPB (steam, condensates, air, soft water, hot water).",
-    task_type: "New Task",
+    task_type: "repair",
     approved_by_user_id: null,
     approved_at: null,
     rejection_reason: null,
-    media_urls: [],
-    due_date: "2026-06-29"
+    media_urls: []
   },
   {
     task_request_id: "376267",
-    asset_id: "42",
+    asset_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
     created_by_user_id: "david",
     status: "pending_approval",
     priority: 1,
     requested_at: "2025-08-05T10:00:00.000Z",
     description: "Dyehouse - to lay new network cable from data cabinet to Irshaad office.",
-    task_type: "New Task",
+    task_type: "improvement",
     approved_by_user_id: null,
     approved_at: null,
     rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-08-31"
+    media_urls: []
   },
   {
     task_request_id: "377558",
-    asset_id: "109",
+    asset_id: "c3d4e5f6-a7b8-9012-cdef-123456789012",
     created_by_user_id: "Kunal",
     status: "pending_approval",
     priority: 2,
     requested_at: "2025-09-25T11:20:00.000Z",
     description: "Dyehouse - To install TV.",
-    task_type: "New Task",
+    task_type: "improvement",
     approved_by_user_id: null,
     approved_at: null,
     rejection_reason: null,
-    media_urls: [],
-    due_date: "2025-09-25"
+    media_urls: []
   }
 ];
 
@@ -322,23 +322,23 @@ async function syncWithSupabase(): Promise<void> {
     
     if (dbAssets) {
       assets = dbAssets.map((a: any) => ({
-        code: a.asset_code,
+        asset_id: a.asset_id,
+        asset_code: a.asset_code,
         name: a.name,
         status: a.status,
         location: a.location,
-        dept_id: a.dept_id,
-        type: a.type,
-        serial: a.serial
+        required_trade: a.required_trade || 'general'
       }));
     }
     
     if (dbTechs) {
       technicians = dbTechs.map((t: any) => ({
-        id: t.technician_id,
-        name: t.full_name,
+        technician_id: t.technician_id,
+        user_id: t.user_id,
+        full_name: t.full_name,
         trade: t.trade,
         active: t.active,
-        workload: t.workload
+        workload: 0
       }));
     }
     
@@ -436,7 +436,7 @@ function populateSignupDepartments(): void {
   
   departments.forEach(dept => {
     const opt = document.createElement('option');
-    opt.value = dept.id;
+    opt.value = dept.department_id;
     opt.textContent = dept.name;
     select.appendChild(opt);
   });
@@ -795,7 +795,7 @@ const fmDetailDeptLoc = document.getElementById('fm-detail-dept-loc') as HTMLEle
 const fmBadgeApproval = document.getElementById('fm-badge-approval') as HTMLElement;
 const rtDeptTitle = document.getElementById('rt-department-title') as HTMLElement;
 
-let selectedDeptId = departments[0].id;
+let selectedDeptId = departments[0].department_id;
 
 function renderFmDashboard(): void {
   const pendingCount = taskRequests.filter(t => t.status === 'pending_approval').length;
@@ -805,10 +805,10 @@ function renderFmDashboard(): void {
     fmDeptTable.innerHTML = '';
     departments.forEach(dept => {
       const tr = document.createElement('tr');
-      if (dept.id === selectedDeptId) tr.classList.add('active');
-      tr.innerHTML = `<td>${esc(dept.name)}</td><td>${esc(dept.location)}</td>`;
+      if (dept.department_id === selectedDeptId) tr.classList.add('active');
+      tr.innerHTML = `<td>${esc(dept.name)}</td>`;
       tr.addEventListener('click', () => {
-        selectedDeptId = dept.id;
+        selectedDeptId = dept.department_id;
         renderFmDashboard();
       });
       fmDeptTable.appendChild(tr);
@@ -818,7 +818,6 @@ function renderFmDashboard(): void {
   const current = deptMap.get(selectedDeptId);
   if (current) {
     if (fmDetailDeptName) fmDetailDeptName.textContent = current.name;
-    if (fmDetailDeptLoc) fmDetailDeptLoc.textContent = current.location;
     if (rtDeptTitle) rtDeptTitle.textContent = current.name;
   }
 }
@@ -859,7 +858,7 @@ function renderTaskEntryTable(): void {
   teTaskListBody.innerHTML = '';
   
   taskRequests.forEach(task => {
-    const asset = assetMap.get(task.asset_id);
+    const asset = assetIdMap.get(task.asset_id);
     const assetName = asset ? asset.name : 'Unknown';
     
     let statusClass = 'row-unplanned'; // Blue (To be planned)
@@ -905,15 +904,12 @@ function loadTaskToForm(task: TaskRequest): void {
   const descField = document.getElementById('te-description') as HTMLTextAreaElement;
   const locField2 = document.getElementById('te-location') as HTMLInputElement;
 
-  const asset = assetMap.get(task.asset_id);
-  if (codeField) codeField.value = task.asset_id;
+  const asset = assetIdMap.get(task.asset_id);
+  if (codeField) codeField.value = asset ? asset.asset_code : task.asset_id;
   if (nameField) nameField.value = asset ? asset.name : '';
-  if (typeField) typeField.value = asset ? asset.type : '';
-  if (serialField) serialField.value = asset ? asset.serial : '';
-  if (deptField) {
-    const dept = asset ? deptMap.get(asset.dept_id) : undefined;
-    deptField.value = dept ? dept.name : '';
-  }
+  if (typeField) typeField.value = asset ? asset.required_trade : '';
+  if (serialField) serialField.value = asset ? asset.asset_code : '';
+  if (deptField) deptField.value = '';
   if (locField) locField.value = asset ? asset.location : '';
   if (urgencySelect) urgencySelect.value = task.priority.toString();
   if (descField) descField.value = task.description;
@@ -931,12 +927,9 @@ function teSearchAsset(): void {
     const locField = document.getElementById('te-asset-loc') as HTMLInputElement;
     
     if (nameField) nameField.value = asset.name;
-    if (typeField) typeField.value = asset.type;
-    if (serialField) serialField.value = asset.serial;
-    if (deptField) {
-      const dept = deptMap.get(asset.dept_id);
-      deptField.value = dept ? dept.name : '';
-    }
+    if (typeField) typeField.value = asset.required_trade;
+    if (serialField) serialField.value = asset.asset_code;
+    if (deptField) deptField.value = '';
     if (locField) locField.value = asset.location;
     addLog(`Asset ${codeInput} metadata resolved.`, 'success');
   } else {
@@ -1105,7 +1098,7 @@ function renderBreakdownTasks(): void {
     const tr = document.createElement('tr');
     const dateStr = new Date(task.requested_at).toLocaleDateString();
     const timeStr = new Date(task.requested_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const asset = assetMap.get(task.asset_id);
+    const asset = assetIdMap.get(task.asset_id);
     const assetName = asset ? asset.name : 'Unknown';
 
     const plannedChecked = task.status !== 'pending_approval' ? 'checked' : '';
@@ -1116,7 +1109,6 @@ function renderBreakdownTasks(): void {
       <td>${escapedId}</td>
       <td>${dateStr}</td>
       <td>${timeStr}</td>
-      <td>Knitting Department</td>
       <td>${esc(assetName)}</td>
       <td>${esc(task.created_by_user_id)}</td>
       <td style="max-width: 150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(task.description)}</td>
@@ -1189,12 +1181,11 @@ document.getElementById('btn-pb-dispatch-engineer')?.addEventListener('click', (
     scheduled_start: start + "T08:00:00.000Z",
     created_at: new Date().toISOString(),
     completed_at: null,
-    duration_mins: duration,
-    person_in_charge: charge1,
-    person_in_charge2: charge2
+    recommended_technician_id: techId,
+    recommendation_reason: `Assigned by coordinator on ${start}`
   };
 
-  const tech = technicians.find(t => t.id === techId);
+  const tech = technicians.find(t => t.technician_id === techId);
   const assign: WorkOrderTechnician = {
     work_order_id: woId,
     technician_id: techId,
@@ -1204,9 +1195,7 @@ document.getElementById('btn-pb-dispatch-engineer')?.addEventListener('click', (
 
   if (window.NITA_CONFIG && window.NITA_CONFIG.USE_REAL_SUPABASE) {
     fetchSupabase('task_request', 'PATCH', {
-      status: 'approved',
-      planned_start_date: start,
-      planned_finish_date: finish
+      status: 'approved'
     }, `task_request_id=eq.${targetTask.task_request_id}`)
       .then(() => fetchSupabase('work_order', 'POST', wo))
       .then(() => fetchSupabase('work_order_technician', 'POST', assign))
@@ -1214,11 +1203,9 @@ document.getElementById('btn-pb-dispatch-engineer')?.addEventListener('click', (
       .catch(err => addLog(`Dispatch failed: ${err.message}`, 'error'));
   } else {
     targetTask.status = 'approved';
-    targetTask.planned_start_date = start;
-    targetTask.planned_finish_date = finish;
     workOrders.push(wo);
     if (tech) {
-      tech.workload += 1;
+      tech.workload = (tech.workload || 0) + 1;
       workOrderTechnicians.push(assign);
     }
     saveDB();
@@ -1226,7 +1213,7 @@ document.getElementById('btn-pb-dispatch-engineer')?.addEventListener('click', (
     renderBreakdownTasks();
   }
 
-  alert(`Dispatched successfully! Work order generated for ${tech ? tech.name : 'Engineer'}.`);
+  alert(`Dispatched successfully! Work order generated for ${tech ? tech.full_name : 'Engineer'}.`);
   addLog(`Dispatched engineer assignment for task ${targetTask.task_request_id}.`, 'success');
 });
 
@@ -1258,12 +1245,12 @@ function renderApprovalTable(): void {
     tr.innerHTML = `
       <td style="font-family:monospace; font-weight:700;">${escapedId}</td>
       <td>
-        <div style="font-weight:700;">Knitting</div>
+        <div style="font-weight:700;">${esc(task.created_by_role || 'operator')}</div>
         <div style="font-size:11px; color:#4b5563;">${esc(task.created_by_user_id)}</div>
       </td>
       <td>${dateStr}</td>
       <td style="max-width:300px; line-height:1.4;">${esc(task.description)}</td>
-      <td>${esc(task.due_date) || dateStr}</td>
+      <td>${dateStr}</td>
       <td>
         <div style="display:flex; flex-direction:column; gap:4px;">
           <label style="font-size:11px; color:#dc2626; font-weight:700; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
@@ -1389,9 +1376,9 @@ function approveTaskImmediate(id: string): void {
 
     const wo = workOrders.find(w => w.task_request_id === task.task_request_id);
     if (wo) {
-      const bestMech = technicians.filter(t => t.active && t.trade === 'mechanic').sort((a,b) => a.workload - b.workload)[0];
+      const bestMech = technicians.filter(t => t.active && t.trade === 'mechanic').sort((a,b) => (a.workload || 0) - (b.workload || 0))[0];
       if (bestMech) {
-        bestMech.workload += 1;
+        bestMech.workload = (bestMech.workload || 0) + 1;
         workOrderTechnicians.push({
           work_order_id: wo.work_order_id,
           technician_id: bestMech.id,
@@ -1419,10 +1406,10 @@ function renderTechnicianDailyJobs(): void {
   if (!techJobsBody || !activeSession) return;
   techJobsBody.innerHTML = '';
 
-  const tech = technicians.find(t => t.name === activeSession?.name);
+  const tech = technicians.find(t => t.full_name === activeSession?.name);
   if (!tech) return;
 
-  const assignments = workOrderTechnicians.filter(wt => wt.technician_id === tech.id);
+  const assignments = workOrderTechnicians.filter(wt => wt.technician_id === tech.technician_id);
   
   if (assignments.length === 0) {
     techJobsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">No active job assignments for your shift today.</td></tr>`;
@@ -1435,6 +1422,9 @@ function renderTechnicianDailyJobs(): void {
     
     const task = taskRequests.find(t => t.task_request_id === wo.task_request_id);
     if (!task) return;
+
+    const asset = assetIdMap.get(task.asset_id);
+    const assetDisplay = asset ? asset.name : task.asset_id.substring(0, 8) + '...';
 
     let buttonActionHTML = '';
     if (wo.status === 'pending') {
@@ -1450,13 +1440,17 @@ function renderTechnicianDailyJobs(): void {
       buttonActionHTML = `<span style="font-size:12px; color:var(--text-muted); font-weight:600;">Job Closed</span>`;
     }
 
+    const scheduledDate = wo.scheduled_start ? new Date(wo.scheduled_start).toLocaleDateString() : '—';
+    const statusColor = wo.status === 'completed' ? '#10b981' : wo.status === 'in_progress' ? '#f59e0b' : '#6b7280';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-family:monospace; font-weight:600;">${esc(wo.work_order_id)}</td>
-      <td style="font-weight:600; color:var(--fm-blue-dark);">${esc(task.asset_id)}</td>
-      <td>${esc(task.description)}</td>
+      <td style="font-weight:600; color:var(--fm-blue-dark);">${esc(assetDisplay)}</td>
+      <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(task.description)}</td>
       <td style="color:${task.priority === 0 ? 'var(--p0-critical)' : 'var(--p2-normal)'}; font-weight:700;">P${task.priority}</td>
-      <td><span class="status-badge" style="font-size:11px; padding:2px 8px;">${esc(wo.status)}</span></td>
+      <td><span class="status-badge" style="font-size:11px; padding:2px 8px; background:${statusColor}20; color:${statusColor}; border:1px solid ${statusColor}40;">${esc(wo.status)}</span></td>
+      <td>${scheduledDate}</td>
       <td>${buttonActionHTML}</td>
     `;
     techJobsBody.appendChild(tr);
@@ -1480,7 +1474,7 @@ function techUpdateJob(woId: string, action: 'start' | 'done' | 'decline'): void
         .then(() => syncWithSupabase())
         .catch(err => addLog(`Complete job failed: ${err.message}`, 'error'));
     } else if (action === 'decline') {
-      fetchSupabase('work_order_technician', 'DELETE', null, `work_order_id=eq.${woId}`)
+      fetchSupabase('work_order_technician', 'PATCH', { status: 'declined' }, `work_order_id=eq.${woId}`)
         .then(() => syncWithSupabase())
         .catch(err => addLog(`Decline job failed: ${err.message}`, 'error'));
     }
@@ -1497,16 +1491,17 @@ function techUpdateJob(woId: string, action: 'start' | 'done' | 'decline'): void
       const task = taskRequests.find(t => t.task_request_id === wo.task_request_id);
       if (task) task.status = 'completed';
 
-      const tech = technicians.find(t => t.name === activeSession?.name);
-      if (tech) tech.workload = Math.max(0, tech.workload - 1);
+      const tech = technicians.find(t => t.full_name === activeSession?.name);
+      if (tech) tech.workload = Math.max(0, (tech.workload || 0) - 1);
       
       addLog(`[Tech Dispatch] Completed job work_order ${woId}. Requesting feedback webhook.`, 'success');
     } else if (action === 'decline') {
       wo.status = 'pending';
-      workOrderTechnicians = workOrderTechnicians.filter(w => w.work_order_id !== woId);
+      const assign = workOrderTechnicians.find(w => w.work_order_id === woId);
+      if (assign) assign.status = 'declined';
       
-      const tech = technicians.find(t => t.name === activeSession?.name);
-      if (tech) tech.workload = Math.max(0, tech.workload - 1);
+      const tech = technicians.find(t => t.full_name === activeSession?.name);
+      if (tech) tech.workload = Math.max(0, (tech.workload || 0) - 1);
       addLog(`[Tech Dispatch] Declined job work_order ${woId}. Reassignment queue active.`, 'warn');
     }
 
@@ -1741,11 +1736,11 @@ const SANDBOX_ENDPOINTS: Record<string, SandboxEndpoint> = {
       const asset = assetMap.get(code);
       if (!asset) return { error: true, message: `Asset with code '${code}' not found` };
       
-      const relatedTasks = taskRequests.filter(t => t.asset_id === code).slice(0, 5);
+      const relatedTasks = taskRequests.filter(t => t.asset_id === asset.asset_id).slice(0, 5);
       return {
         error: false,
         message: `Asset with code '${code}' found`,
-        asset_code: asset.code,
+        asset_code: asset.asset_code,
         name: asset.name,
         status: asset.status,
         location: asset.location,
@@ -1820,7 +1815,7 @@ const SANDBOX_ENDPOINTS: Record<string, SandboxEndpoint> = {
       const trade = (inputs["param-rec-trade"] || "mechanic") as TradeType;
       const list = technicians.filter(t => t.active && t.trade === trade);
       if (list.length === 0) return { error: true, message: "No active technicians available" };
-      list.sort((a, b) => a.workload - b.workload);
+      list.sort((a, b) => (a.workload || 0) - (b.workload || 0));
       return { error: false, recommended: list[0], Alternatives: list.slice(1) };
     }
   },

@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <!-- Auth Fullscreen Overlay -->
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-card glass-card">
@@ -518,13 +519,13 @@
             <div class="fm-group-title">Scenario Quick Presets</div>
             <div class="simulator-controls">
               <button class="sim-scenario-btn" onclick="loadScenario('critical_leak')">
-                <strong>P0 Critical</strong><br>Grinding noise & line stopped on Circular Knitter.
+                <strong>🚨 P0 Critical</strong><br>Grinding noise & line stopped on Circular Knitter.
               </button>
               <button class="sim-scenario-btn" onclick="loadScenario('urgent_tension')">
-                <strong>P1 Urgent</strong><br>Gerber cutter belt slipping on Row 1.
+                <strong>⚡ P1 Urgent</strong><br>Gerber cutter belt slipping on Row 1.
               </button>
               <button class="sim-scenario-btn" onclick="loadScenario('normal_cosmetic')">
-                <strong>P2 Non-Urgent</strong><br>Office door latch broken.
+                <strong>🟢 P2 Non-Urgent</strong><br>Office door latch broken.
               </button>
             </div>
           </div>
@@ -561,10 +562,11 @@
             <thead>
               <tr>
                 <th>Work Order ID</th>
-                <th>Asset Code</th>
+                <th>Asset</th>
                 <th>Description</th>
                 <th>Priority</th>
                 <th>Status</th>
+                <th>Scheduled</th>
                 <th>Lifecycle Action</th>
               </tr>
             </thead>
