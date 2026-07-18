@@ -769,9 +769,10 @@ window.clearConsole = clearConsole;
 function loadScenario(preset) {
   const input = document.getElementById('chat-user-input');
   if (!input) return;
-  if (preset === 'critical_leak') { input.value = "Mo pe tann enn gro gro bwi grinding lor knitting floor. Brother Circular Knitter line 3 inn arete net!"; addLog("[Preset] P0 Critical loaded.", "info"); }
-  else if (preset === 'urgent_tension') { input.value = "Belt sliding on Gerber Z1. Machine still works but cutting poorly, need someone quickly."; addLog("[Preset] P1 Urgent loaded.", "info"); }
-  else { input.value = "Office gate handle is loose. Can someone check it during daily rounds?"; addLog("[Preset] P2 Non-Urgent loaded.", "info"); }
+  const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (preset === 'critical_leak') { input.value = `Urgent: Loud grinding noise on knitting floor line 3 — Brother Circular Knitter just stopped. Need mechanic NOW! (${ts})`; addLog("[Preset] P0 Critical scenario loaded.", "info"); }
+  else if (preset === 'urgent_tension') { input.value = `Belt is sliding on Gerber Z1 cutting machine, quality dropping fast. Need someone to fix it quickly please. (${ts})`; addLog("[Preset] P1 Urgent scenario loaded.", "info"); }
+  else { input.value = `${ts} — Office gate handle is loose and needs checking during daily rounds.`; addLog("[Preset] P2 Non-Urgent scenario loaded.", "info"); }
 }
 window.loadScenario = loadScenario;
 
@@ -785,32 +786,42 @@ function processUserMessage(text) {
   setTimeout(() => addLog("Inbound WhatsApp webhook received from NITA Dispatcher.", "info"), 400);
   let assetCode = "42", trade = "general", priority = 2, responseText = "";
   const lower = text.toLowerCase();
-  if (lower.includes("knitt") || lower.includes("circular") || lower.includes("bwi")) { assetCode = "39"; trade = "mechanic"; priority = 0; responseText = "Detected **Circular Knitter (Asset 39)**. **P0 Critical**. Requesting mechanic dispatch."; }
-  else if (lower.includes("gerber") || lower.includes("belt") || lower.includes("cut")) { assetCode = "175"; trade = "mechanic"; priority = 1; responseText = "Detected **Gerber Z1 (Asset 175)**. **P1 Urgent**. Recommending Mechanic."; }
-  else { responseText = "Logged inspection request. **P2 Non-Urgent** task."; }
+  if (lower.includes("knitt") || lower.includes("circular") || lower.includes("bwi")) { assetCode = "39"; trade = "mechanic"; priority = 0; responseText = "Detected **Circular Knitter (Asset 39)**. **P0 Critical** issue logged. A mechanic has been recommended. Please wait for coordinator approval."; }
+  else if (lower.includes("gerber") || lower.includes("belt") || lower.includes("cut")) { assetCode = "175"; trade = "mechanic"; priority = 1; responseText = "Detected **Gerber Z1 Cutting Machine (Asset 175)**. **P1 Urgent** task logged. A mechanic will be assigned shortly."; }
+  else { assetCode = assetMap.size > 0 ? Array.from(assetMap.keys())[0] : "42"; responseText = "Thank you! Your maintenance request has been logged. Our coordinator will review and assign a technician shortly. You will receive an update via WhatsApp."; }
   setTimeout(() => addLog(`NER: Asset ${assetCode}, Priority P${priority}, Trade: ${trade}`, "success"), 1200);
   setTimeout(() => {
-    addLog("Inserting task_request...", "success");
-    // Show AI response in chat IMMEDIATELY
+    addLog("Processing task_request...", "success");
     const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    initialConversations.push({ sender: 'ai', text: responseText, time: aiTime });
-    renderChat();
-    addLog("AI response dispatched to WhatsApp.", "success");
-
-    // Create task via API (async, result logged separately)
     if (window.NITA_CONFIG?.USE_REAL_SUPABASE) {
+      // Create task via API
       NITA_API.createTask({ asset_code: assetCode, created_by_phone: activeSession?.phone || '', description: text, priority, task_type: priority === 0 ? 'emergency' : 'repair' })
         .then(r => {
-          if (r.error) addLog(`Task creation failed: ${r.message}`, 'error');
-          else if (r.is_duplicate) addLog(`Duplicate detected — existing task ${r.existing_task_id?.substring(0, 8)}...`, 'warn');
-          else addLog(`Task created successfully (status: ${r.status || 'pending_approval'})`, 'success');
+          if (r.error) {
+            addLog(`Task creation failed: ${r.message}`, 'error');
+            initialConversations.push({ sender: 'ai', text: "Sorry, there was an issue logging your request. Please try again or contact the coordinator directly.", time: aiTime });
+          } else if (r.is_duplicate) {
+            addLog(`Similar task already exists`, 'warn');
+            initialConversations.push({ sender: 'ai', text: `This issue has already been reported (Task: ${r.existing_task_id?.substring(0, 8)}...). Our coordinator is already handling it. No duplicate created.`, time: aiTime });
+          } else {
+            addLog(`Task created successfully`, 'success');
+            initialConversations.push({ sender: 'ai', text: responseText, time: aiTime });
+          }
+          renderChat();
           syncWithSupabase();
         })
-        .catch(err => addLog(`Task creation error: ${err.message}`, 'error'));
+        .catch(err => {
+          addLog(`Task creation error: ${err.message}`, 'error');
+          initialConversations.push({ sender: 'ai', text: "Sorry, there was a connection issue. Your message has been received and will be processed shortly.", time: aiTime });
+          renderChat();
+        });
     } else {
       taskRequests.unshift({ task_request_id: generateId('task'), asset_id: assetCode, created_by_user_id: activeSession?.name || "Operator", status: "pending_approval", priority, requested_at: new Date().toISOString(), description: text, task_type: "repair", approved_by_user_id: null, approved_at: null, rejection_reason: null, media_urls: [] });
+      initialConversations.push({ sender: 'ai', text: responseText, time: aiTime });
+      renderChat();
       saveDB(); renderFmDashboard(); renderTaskEntryTable(); renderApprovalTable();
     }
+    addLog("AI response dispatched to WhatsApp.", "success");
   }, 2000);
 }
 
