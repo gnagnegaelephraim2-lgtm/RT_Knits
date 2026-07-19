@@ -2,6 +2,8 @@
 // RT KNITS — NITA CMMS AGENTIC PROTOTYPE & ENGINE (TYPESCRIPT)
 // ============================================================
 
+export {};
+
 interface Window {
   NITA_CONFIG?: {
     USE_REAL_SUPABASE: boolean;
