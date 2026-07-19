@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" width="320" height="100">
+  <defs>
+    <style>
+      .rt-red { fill: #e30613; }
+      .rt-blue { fill: #004b97; }
+      .rt-knits-text {
+        font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: 52px;
+        fill: #004b97;
+        letter-spacing: 1px;
+      }
+      .rt-letter-r {
+        font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: 50px;
+        fill: #e30613;
+      }
+      .rt-letter-t {
+        font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: 50px;
+        fill: #004b97;
+      }
+    </style>
+  </defs>
+
+  <!-- EMBLEM GROUP (Circle at x=50, y=50, r=44) -->
+  <g id="logo-emblem">
+    <!-- White Circle Background -->
+    <circle cx="50" cy="50" r="44" fill="#ffffff" />
+
+    <!-- Red Top-Left Swoosh Arc -->
+    <path class="rt-red" d="M 50 6 A 44 44 0 0 0 10 70 C 18 78 30 50 50 6 Z" />
+    <path class="rt-red" d="M 50 6 C 72 6 86 20 91 30 C 80 15 65 8 50 6 Z" />
+    <path class="rt-red" d="M 50 6 A 44 44 0 0 0 6 50 C 6 25 25 8 50 6 Z" />
+
+    <!-- Blue Bottom-Right Swoosh Arc -->
+    <path class="rt-blue" d="M 50 94 A 44 44 0 0 0 94 50 C 94 75 75 92 50 94 Z" />
+    <path class="rt-blue" d="M 50 94 C 28 94 14 80 9 70 C 20 85 35 92 50 94 Z" />
+
+    <!-- Stylized Red 'R' -->
+    <text x="32" y="67" class="rt-letter-r" text-anchor="middle">R</text>
+
+    <!-- Stylized Blue 'T' -->
+    <text x="65" y="67" class="rt-letter-t" text-anchor="middle">T</text>
+  </g>
+
+  <!-- KNITS WORDMARK -->
+  <text x="110" y="70" class="rt-knits-text">KNITS</text>
+</svg>
