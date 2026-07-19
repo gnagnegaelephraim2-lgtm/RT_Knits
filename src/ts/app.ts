@@ -290,7 +290,7 @@ function selectDepartment(deptId: string): void {
   const nameEl = document.getElementById('fm-detail-dept-name');
   const locEl = document.getElementById('fm-detail-dept-loc');
   if (dept && nameEl) nameEl.textContent = dept.name;
-  if (dept && locEl) locEl.textContent = dept.location || 'N/A';
+  if (locEl) locEl.textContent = 'N/A';
 }
 
 (window as any).selectDepartment = selectDepartment;

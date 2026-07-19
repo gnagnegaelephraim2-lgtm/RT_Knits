@@ -85,13 +85,13 @@ export class AuthManager {
   }
 
   async login(phone: string, pin: string): Promise<{ success: boolean; error?: string; role?: UserRole }> {
-    try {
-      const normalizedPhone = this.normalizePhone(phone);
-      
-      if (!this.validateE164(normalizedPhone)) {
-        return { success: false, error: 'Invalid phone number format.' };
-      }
+    const normalizedPhone = this.normalizePhone(phone);
+    
+    if (!this.validateE164(normalizedPhone)) {
+      return { success: false, error: 'Invalid phone number format.' };
+    }
 
+    try {
       const pinHash = await this.hashPin(pin);
 
       // Try NITA API first
@@ -131,7 +131,8 @@ export class AuthManager {
       return this.loginFallback(normalizedPhone, pinHash);
     } catch (error) {
       console.error('Login error:', error);
-      return this.loginFallback(normalizedPhone, await this.hashPin(pin));
+      const pinHash = await this.hashPin(pin);
+      return this.loginFallback(normalizedPhone, pinHash);
     }
   }
 
@@ -161,19 +162,20 @@ export class AuthManager {
   }
 
   async signup(name: string, phone: string, role: string, pin: string, departmentId?: string, trade?: string): Promise<{ success: boolean; error?: string }> {
+    const normalizedPhone = this.normalizePhone(phone);
+    
+    if (!this.validateE164(normalizedPhone)) {
+      return { success: false, error: 'Invalid phone number format.' };
+    }
+
+    const sanitizedName = name.replace(/[<>]/g, '').trim();
+
+    if (sanitizedName.length < 2 || sanitizedName.length > 100) {
+      return { success: false, error: 'Name must be 2-100 characters.' };
+    }
+
     try {
-      const normalizedPhone = this.normalizePhone(phone);
-      
-      if (!this.validateE164(normalizedPhone)) {
-        return { success: false, error: 'Invalid phone number format.' };
-      }
-
       const pinHash = await this.hashPin(pin);
-      const sanitizedName = name.replace(/[<>]/g, '').trim();
-
-      if (sanitizedName.length < 2 || sanitizedName.length > 100) {
-        return { success: false, error: 'Name must be 2-100 characters.' };
-      }
 
       // Try NITA API
       const response = await fetch(`${(window as any).NITA_CONFIG?.NITA_API_URL || 'https://bot.nelsonfodjo.me/webhook'}/api-auth-signup`, {
@@ -199,7 +201,8 @@ export class AuthManager {
       return this.signupFallback(normalizedPhone, pinHash, role, sanitizedName);
     } catch (error) {
       console.error('Signup error:', error);
-      return this.signupFallback(normalizedPhone, await this.hashPin(pin), role, name);
+      const pinHash = await this.hashPin(pin);
+      return this.signupFallback(normalizedPhone, pinHash, role, sanitizedName);
     }
   }
 
