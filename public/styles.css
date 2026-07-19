@@ -1715,3 +1715,53 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   16. LANGUAGE SWITCHER
+   ============================================================ */
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-elevated);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.lang-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  letter-spacing: 0.5px;
+}
+
+.lang-btn:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.lang-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Auth Logo */
+.auth-logo {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 12px;
+}
