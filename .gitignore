@@ -23,3 +23,8 @@ node_modules/
 # Logs
 *.log
 .vercel
+
+# Build output
+public/dist/
+dist/
+
