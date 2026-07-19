@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <title>RT Maintenance — NITA CMMS</title>
+  <title>NITA — RT Knits Maintenance</title>
   <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0a0e1a">
 </head>
 <body>
 
   <!-- Auth Fullscreen Overlay -->
   <div id="auth-overlay" class="auth-overlay">
-    <div class="auth-card glass-card">
+    <div class="auth-card">
       <div class="auth-header">
         <div class="auth-logo">RT</div>
-        <h2>NITA CMMS Secure Gate</h2>
+        <h2>NITA CMMS</h2>
         <p>RT Knits Maintenance Portal</p>
       </div>
       
@@ -28,14 +29,14 @@
       <div id="form-login-pane" class="auth-form-pane active">
         <div class="auth-form-fields">
           <div class="fm-form-field">
-            <label for="auth-phone">Phone Number (E.164)</label>
-            <input type="text" id="auth-phone" placeholder="+2305XXXXXXX" value="+23054737266">
+            <label for="auth-phone">Phone Number</label>
+            <input type="text" id="auth-phone" placeholder="+230 5XXX XXXX" value="+23054737266">
           </div>
           <div class="fm-form-field">
-            <label for="auth-pin">Secure PIN</label>
-            <input type="password" id="auth-pin" placeholder="••••" maxlength="6" value="1234">
+            <label for="auth-pin">PIN</label>
+            <input type="password" id="auth-pin" placeholder="Enter PIN" maxlength="6" value="1234">
           </div>
-          <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-login-submit">Authenticate Secure Session</button>
+          <button class="planner-btn primary" style="width: 100%; padding: 14px; font-weight: 700;" id="btn-login-submit">Sign In</button>
         </div>
       </div>
 
@@ -47,8 +48,8 @@
             <input type="text" id="auth-signup-name" placeholder="John Doe">
           </div>
           <div class="fm-form-field">
-            <label for="auth-signup-phone">Phone Number (E.164)</label>
-            <input type="text" id="auth-signup-phone" placeholder="+2305XXXXXXX">
+            <label for="auth-signup-phone">Phone Number</label>
+            <input type="text" id="auth-signup-phone" placeholder="+230 5XXX XXXX">
           </div>
           <div class="fm-form-field">
             <label for="auth-signup-role">Role</label>
@@ -65,7 +66,7 @@
             </select>
           </div>
           <div class="fm-form-field" id="signup-trade-field" style="display: none;">
-            <label for="auth-signup-trade">Technician Trade</label>
+            <label for="auth-signup-trade">Trade</label>
             <select id="auth-signup-trade">
               <option value="general">General Maintenance</option>
               <option value="mechanic">Mechanic</option>
@@ -76,10 +77,10 @@
             </select>
           </div>
           <div class="fm-form-field">
-            <label for="auth-signup-pin">Create Secure PIN (4-6 Digits)</label>
-            <input type="password" id="auth-signup-pin" placeholder="••••" maxlength="6">
+            <label for="auth-signup-pin">Create PIN (4-6 digits)</label>
+            <input type="password" id="auth-signup-pin" placeholder="Create PIN" maxlength="6">
           </div>
-          <button class="planner-btn primary" style="width: 100%; padding: 12px; font-weight: 700;" id="btn-signup-submit">Create Account & Sign In</button>
+          <button class="planner-btn primary" style="width: 100%; padding: 14px; font-weight: 700;" id="btn-signup-submit">Create Account</button>
         </div>
       </div>
 
@@ -89,14 +90,14 @@
   <!-- Sidebar Navigation -->
   <aside class="sidebar">
     <!-- User Profile Card -->
-    <div class="sidebar-user-card glass-card" style="margin-bottom: 20px;">
+    <div class="sidebar-user-card">
       <div class="sidebar-user-avatar" id="current-user-avatar">NF</div>
       <div style="flex-grow: 1; min-width: 0;">
-        <div class="sidebar-user-name" id="current-user-name" style="color: #1f2937;">Nelson Fodjo</div>
-        <div class="sidebar-user-role" id="current-user-role" style="color: #4b5563;">Coordinator</div>
+        <div class="sidebar-user-name" id="current-user-name">Nelson Fodjo</div>
+        <div class="sidebar-user-role" id="current-user-role">Coordinator</div>
       </div>
       <button class="logout-btn" id="btn-logout" title="Log Out">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 18px; height: 18px;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
         </svg>
       </button>
@@ -104,22 +105,22 @@
     
     <ul class="sidebar-menu" id="sidebar-nav-menu">
       <li class="menu-item active" data-target="pane-dashboard" id="menu-coordinator-dash">
-        <span>Coordinator Dash</span>
+        <span>Dashboard</span>
       </li>
       <li class="menu-item" data-target="pane-planning-breakdown" id="menu-planning-breakdown">
-        <span>Planning Breakdown</span>
+        <span>Planning</span>
       </li>
       <li class="menu-item" data-target="pane-task-entry" id="menu-task-entry">
         <span>Task Entry</span>
       </li>
       <li class="menu-item" data-target="pane-tasks-to-approve" id="menu-tasks-to-approve">
-        <span>Tasks To be Approved</span>
+        <span>Approvals</span>
       </li>
       <li class="menu-item" data-target="pane-simulator" id="menu-whatsapp-sim">
-        <span>Agent WhatsApp Sim</span>
+        <span>WhatsApp Sim</span>
       </li>
       <li class="menu-item" data-target="pane-technician-tasks" id="menu-technician-tasks" style="display: none;">
-        <span>My Daily Tasks</span>
+        <span>My Tasks</span>
       </li>
       <li class="menu-item" data-target="pane-api" id="menu-api">
         <span>API Sandbox</span>
@@ -128,121 +129,115 @@
         <span>Data Model</span>
       </li>
       <li class="menu-item" data-target="pane-docs" id="menu-docs">
-        <span>Solution Design</span>
+        <span>Documentation</span>
       </li>
     </ul>
     
-    <div class="sidebar-footer" style="color: #6b7280;">
-      <div>Host: RT Knits (Mauritius)</div>
-      <div>Uptime SLA Target: 99.8%</div>
+    <div class="sidebar-footer">
+      <span>RT Knits — Mauritius</span>
+      <span>SLA Target: 99.8%</span>
     </div>
   </aside>
 
   <!-- Main Content Area -->
   <main class="main-content">
     
-    <!-- Top Wavy Header Banner (Exactly matching the screenshots) -->
+    <!-- Top Header -->
     <div class="rt-wavy-header">
       <div class="rt-logo-area">
         <div class="rt-logo-circle">
           <span class="rt-text">RT</span>
         </div>
         <div class="rt-header-titles">
-          <div class="rt-title-main">Maintenance</div>
-          <div class="rt-title-sub" id="rt-department-title">Marketing</div>
+          <div class="rt-title-main">NITA Maintenance</div>
+          <div class="rt-title-sub" id="rt-department-title">Coordinator Dashboard</div>
         </div>
       </div>
       <div class="rt-server-name">
-        Maintenance Database (fmdevserver.rtknits.local)
+        NITA CMMS v2.0
       </div>
     </div>
 
-    <!-- PANE 1: FileMaker Coordinator Dashboard (Image 1 & 2) -->
+    <!-- PANE 1: Coordinator Dashboard -->
     <section id="pane-dashboard" class="content-pane active">
       <div class="filemaker-main-layout">
         
-        <!-- Left Side: Table of Departments -->
+        <!-- Left Side: Department List -->
         <div class="glass-card fm-sidebar-card">
-          <div class="fm-title-banner">COORDINATOR DASHBOARD</div>
+          <div class="fm-title-banner">Departments</div>
           <div class="fm-table-scroll-container">
             <table class="fm-scroll-table" id="fm-dept-dashboard-table">
-              <!-- Dynamically populated rows -->
             </table>
           </div>
         </div>
 
-        <!-- Center/Right Side: Pill Button Grids (Image 1 & 2) -->
+        <!-- Right Side: Quick Actions -->
         <div class="fm-grids-container">
           <div class="fm-buttons-grid-layout">
             
             <!-- Group 1 -->
             <div class="glass-card fm-group-card">
-              <div class="fm-btn-pill primary" onclick="navigateToPane('pane-tasks-to-approve')">Request Approval <span id="fm-badge-approval">28</span></div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Planning Breakdown</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Immediate Planning</div>
+              <div class="fm-btn-pill primary" onclick="navigateToPane('pane-tasks-to-approve')">Approvals <span id="fm-badge-approval">28</span></div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Planning</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Immediate</div>
               <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Planned</div>
             </div>
 
             <!-- Group 2 -->
             <div class="glass-card fm-group-card">
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">List of Technicians</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">View all Work Order</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Technicians</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Work Orders</div>
               <div class="fm-btn-pill">Special Task</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-docs')">View Report</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-docs')">Reports</div>
             </div>
 
             <!-- Group 3 -->
             <div class="glass-card fm-group-card">
-              <div class="fm-btn-pill">Edit Planned work</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">View Tech Status</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">List of Task</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">List of Task(Preventive)</div>
+              <div class="fm-btn-pill">Edit Planned</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Tech Status</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">Task List</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-task-entry')">Preventive</div>
             </div>
 
             <!-- Group 4 -->
             <div class="glass-card fm-group-card">
-              <div class="fm-btn-pill tan">Report By Tech</div>
-              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Tech Dash</div>
-              <div class="fm-btn-pill">Preventive Calendar</div>
-              <div class="fm-btn-pill">PrePlanBreak</div>
-              <div class="fm-btn-pill danger" onclick="resetAllWorkOrders()">RESET WORK ORDER</div>
-              <div class="fm-btn-pill">List view calendar</div>
-              <div class="fm-btn-pill">Leakage Calendar</div>
+              <div class="fm-btn-pill tan">Tech Reports</div>
+              <div class="fm-btn-pill" onclick="navigateToPane('pane-planning-breakdown')">Tech Dashboard</div>
+              <div class="fm-btn-pill">Calendar</div>
+              <div class="fm-btn-pill danger" onclick="resetAllWorkOrders()">Reset Orders</div>
             </div>
 
             <!-- Group 5 -->
             <div class="glass-card fm-group-card">
-              <div class="fm-btn-pill">Printing AssetCode</div>
+              <div class="fm-btn-pill">Asset Labels</div>
               <div class="fm-btn-pill">Asset Register</div>
-              <div class="fm-btn-pill yellow-text">multiUser View</div>
-              <div class="fm-btn-pill">report By work Order</div>
-              <div class="fm-btn-pill">Send Preventive Request</div>
-              <div class="fm-text-link">Technician Working Hours</div>
+              <div class="fm-btn-pill">Multi-User View</div>
+              <div class="fm-btn-pill">Order Reports</div>
             </div>
 
           </div>
 
-          <!-- Bottom Row: Selected Department Box -->
+          <!-- Bottom Row -->
           <div class="fm-bottom-detail-box">
             <div class="glass-card fm-dept-status-card">
-              <div class="fm-small-banner">Department</div>
+              <div class="fm-small-banner">Selected Department</div>
               <div class="fm-detail-row">
-                <span class="value" id="fm-detail-dept-name" style="font-weight: 700; font-size: 15px;">Marketing</span>
+                <span class="value" id="fm-detail-dept-name">Marketing</span>
               </div>
-              <div class="fm-small-banner" style="margin-top: 10px;">Location</div>
+              <div class="fm-small-banner" style="margin-top: 8px;">Location</div>
               <div class="fm-detail-row">
-                <span class="value" id="fm-detail-dept-loc" style="font-size: 13px; color: #4b5563;">Open Office</span>
+                <span class="value" id="fm-detail-dept-loc" style="font-weight: 500;">Open Office</span>
               </div>
               <button class="fm-btn-pill primary" style="margin-top: 12px; width: 100%;">
-                View Request Sent
+                View Requests
               </button>
             </div>
 
-            <div class="glass-card fm-dept-status-card" style="flex-grow: 2;">
-              <div class="fm-small-banner">Sending Request (Task Type)</div>
-              <div style="display: flex; gap: 16px; justify-content: center; align-items: center; height: 100%;">
+            <div class="glass-card fm-dept-status-card">
+              <div class="fm-small-banner">New Request</div>
+              <div style="display: flex; gap: 12px; margin-top: 12px;">
                 <button class="fm-large-btn-pill" onclick="navigateToPane('pane-task-entry')">Repair</button>
-                <button class="fm-large-btn-pill" onclick="navigateToPane('pane-task-entry')">Improvements and Projects</button>
+                <button class="fm-large-btn-pill" onclick="navigateToPane('pane-task-entry')">Projects</button>
               </div>
             </div>
           </div>
@@ -252,71 +247,70 @@
       </div>
     </section>
 
-    <!-- PANE 2: Planning Breakdown (Image 4) -->
+    <!-- PANE 2: Planning Breakdown -->
     <section id="pane-planning-breakdown" class="content-pane">
       <div class="planning-breakdown-layout">
         
-        <!-- Header Controls & Subtabs -->
+        <!-- Header Controls -->
         <div class="glass-card planning-header-card">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
             <div>
               <div class="fm-subtabs-row">
-                <button class="subtab-btn active" onclick="setBreakdownTab('leakage')">Leakage Requests</button>
-                <button class="subtab-btn" onclick="setBreakdownTab('repairs')">Planning Repairs</button>
-                <button class="subtab-btn" onclick="setBreakdownTab('pending')">Engineer pending</button>
-                <button class="subtab-btn" onclick="setBreakdownTab('approved')">Engineer Approved</button>
+                <button class="subtab-btn active" onclick="setBreakdownTab('leakage')">Leakage</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('repairs')">Repairs</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('pending')">Pending</button>
+                <button class="subtab-btn" onclick="setBreakdownTab('approved')">Approved</button>
                 <span class="subtab-badge" id="breakdown-pending-count">0</span>
               </div>
             </div>
             
-            <!-- Tech Assignment & Date Allocation grid -->
+            <!-- Assignment Controls -->
             <div class="fm-assignment-controls-box">
               <div class="assignment-grid">
                 <div class="fm-form-field">
-                  <label>Please Select Technician</label>
-                  <div style="display: flex; gap: 4px;">
-                    <select id="pb-tech-select" style="min-width: 140px; background: #fff; color: #000; border: 1px solid #71717a;">
-                      <!-- Dynamic techs -->
+                  <label>Technician</label>
+                  <div style="display: flex; gap: 8px;">
+                    <select id="pb-tech-select" style="min-width: 140px;">
                     </select>
-                    <button class="planner-btn" style="padding: 2px 8px;">+</button>
+                    <button class="planner-btn" style="padding: 4px 12px;">+</button>
                   </div>
                 </div>
                 <div class="fm-form-field">
-                  <label>Duration (Mins)</label>
-                  <input type="number" id="pb-duration" value="60" style="width: 70px; background: #fff; color: #000; border: 1px solid #71717a;">
+                  <label>Duration (min)</label>
+                  <input type="number" id="pb-duration" value="60">
                 </div>
                 <div class="fm-form-field">
-                  <label>Person in charge</label>
-                  <input type="text" id="pb-charge-1" value="Nelson Fodjo" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                  <label>Person in Charge</label>
+                  <input type="text" id="pb-charge-1" value="Nelson Fodjo">
                 </div>
                 <div class="fm-form-field">
-                  <label>Person in charge2</label>
-                  <input type="text" id="pb-charge-2" value="" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                  <label>Backup</label>
+                  <input type="text" id="pb-charge-2" value="">
                 </div>
               </div>
               
-              <div class="assignment-dates-grid" style="margin-top: 10px;">
+              <div class="assignment-dates-grid">
                 <div class="fm-form-field">
-                  <label>Plan Startdate</label>
-                  <input type="date" id="pb-start-date" value="2026-07-18" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                  <label>Start Date</label>
+                  <input type="date" id="pb-start-date" value="2026-07-18">
                 </div>
                 <div class="fm-form-field">
-                  <label>Plan Finishdate</label>
-                  <input type="date" id="pb-finish-date" value="2026-07-18" style="background: #fff; color: #000; border: 1px solid #71717a;">
+                  <label>Finish Date</label>
+                  <input type="date" id="pb-finish-date" value="2026-07-18">
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Main Breakdown Table -->
-        <div class="glass-card planning-table-card" style="flex-grow: 1; display: flex; flex-direction: column;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div style="font-size: 13px; color: #4b5563; font-family: monospace;">OtherAsset:</div>
+        <!-- Main Table -->
+        <div class="glass-card planning-table-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">Asset Filter:</div>
             
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 12px; color: #4b5563; font-weight: 700;">Search Description:</span>
-              <input type="text" id="pb-search-description" placeholder="Type to filter..." style="background:#fff; border:1px solid #71717a; color:#000; padding:6px; border-radius:4px; font-size:12px; outline:none;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Search:</span>
+              <input type="text" id="pb-search-description" placeholder="Type to filter..." style="min-width: 200px;">
             </div>
           </div>
 
@@ -328,83 +322,82 @@
                   <th>Date</th>
                   <th>Time</th>
                   <th>Department</th>
-                  <th>Asset Name</th>
-                  <th>Requester / Approved By</th>
+                  <th>Asset</th>
+                  <th>Requester</th>
                   <th>Description</th>
-                  <th>Project Sheet</th>
-                  <th>Planning Type</th>
+                  <th>Project</th>
+                  <th>Type</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="pb-breakdown-table-body">
-                <!-- Dynamic Breakdown tasks -->
               </tbody>
             </table>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-            <button class="planner-btn primary" id="btn-pb-dispatch-engineer">Engineer ➔</button>
+          <div style="display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <button class="planner-btn primary" id="btn-pb-dispatch-engineer">Dispatch Engineer</button>
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- PANE 3: Task Entry Screen (Image 3) -->
+    <!-- PANE 3: Task Entry -->
     <section id="pane-task-entry" class="content-pane">
       <div class="task-entry-layout">
         
-        <!-- Left Side: Asset Details & Urgency Panel -->
+        <!-- Left: Form Panel -->
         <div class="glass-card task-entry-form-panel">
-          <div class="fm-title-banner">TaskType : Repair</div>
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+          <div class="fm-title-banner">New Task — Repair</div>
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px;">
             
             <div class="fm-form-field">
               <label>Asset Code</label>
               <div style="display: flex; gap: 8px;">
-                <input type="text" id="te-asset-code" value="39" style="flex-grow: 1; background: #fff; color: #000; border: 1px solid #71717a;">
-                <button class="planner-btn" style="padding: 4px 10px;" onclick="teSearchAsset()">Search</button>
+                <input type="text" id="te-asset-code" value="39" style="flex-grow: 1;">
+                <button class="planner-btn" style="padding: 4px 14px;" onclick="teSearchAsset()">Search</button>
               </div>
             </div>
             
             <div class="fm-form-field">
               <label>Asset Name</label>
-              <input type="text" id="te-asset-name" value="Circular Knitter — Brother CK-8" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <input type="text" id="te-asset-name" value="Circular Knitter — Brother CK-8">
             </div>
             <div class="fm-form-field">
               <label>Asset Type</label>
-              <input type="text" id="te-asset-type" value="Utility Equipment" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <input type="text" id="te-asset-type" value="Utility Equipment">
             </div>
             <div class="fm-form-field">
               <label>Serial</label>
-              <input type="text" id="te-asset-serial" value="SN-8849-CK" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <input type="text" id="te-asset-serial" value="SN-8849-CK">
             </div>
             <div class="fm-form-field">
               <label>Department</label>
-              <input type="text" id="te-asset-dept" value="Knitting Floor" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <input type="text" id="te-asset-dept" value="Knitting Floor">
             </div>
             <div class="fm-form-field">
-              <label>Asset Loc</label>
-              <input type="text" id="te-asset-loc" value="Knitting Floor, Row 3" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <label>Location</label>
+              <input type="text" id="te-asset-loc" value="Knitting Floor, Row 3">
             </div>
             
-            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 8px 0;">
+            <div style="border-top: 1px solid var(--border); margin: 8px 0;"></div>
             
             <div class="fm-form-field">
               <label>Urgency</label>
-              <select id="te-urgency" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <select id="te-urgency">
                 <option value="0">Urgent Repairs</option>
-                <option value="1">Needed repairs</option>
-                <option value="2">Improvements and Projects</option>
+                <option value="1">Needed Repairs</option>
+                <option value="2">Improvements & Projects</option>
               </select>
             </div>
             <div class="fm-form-field">
               <label>Description</label>
-              <textarea id="te-description" style="background: #fff; color: #000; border: 1px solid #71717a;">Water leakage on Floor</textarea>
+              <textarea id="te-description">Water leakage on Floor</textarea>
             </div>
             <div class="fm-form-field">
-              <label>Location</label>
-              <input type="text" id="te-location" value="Open Office" style="background: #fff; color: #000; border: 1px solid #71717a;">
+              <label>Location Detail</label>
+              <input type="text" id="te-location" value="Open Office">
             </div>
             
             <div class="task-entry-buttons">
@@ -415,35 +408,34 @@
           </div>
         </div>
 
-        <!-- Right Side: Tasks Table List and color legend -->
+        <!-- Right: Task List -->
         <div class="glass-card task-entry-list-panel">
           <div class="task-entry-header-row">
-            <h3 style="font-size: 16px; font-weight: 700;">Select the request to edit</h3>
+            <h3>Task List</h3>
             
             <div class="fm-legend-box">
-              <div class="legend-item"><span class="legend-dot green"></span> Already Planned</div>
-              <div class="legend-item"><span class="legend-dot red"></span> Deleted By planner</div>
+              <div class="legend-item"><span class="legend-dot green"></span> Planned</div>
+              <div class="legend-item"><span class="legend-dot red"></span> Deleted</div>
               <div class="legend-item"><span class="legend-dot yellow"></span> Rework</div>
-              <div class="legend-item"><span class="legend-dot blue"></span> To be planned</div>
+              <div class="legend-item"><span class="legend-dot blue"></span> Unplanned</div>
             </div>
           </div>
           
-          <div style="flex-grow: 1; overflow-y: auto; margin-top: 16px;">
+          <div style="flex-grow: 1; overflow-y: auto;">
             <table class="fm-task-list-table select-task-table">
               <thead>
                 <tr>
                   <th>Asset</th>
                   <th>Name</th>
-                  <th>Task Type</th>
+                  <th>Type</th>
                   <th>Description</th>
                   <th>Urgency</th>
                   <th>Priority</th>
-                  <th>Due Date</th>
+                  <th>Due</th>
                   <th>Select</th>
                 </tr>
               </thead>
               <tbody id="te-task-list-body">
-                <!-- Dynamic Task items -->
               </tbody>
             </table>
           </div>
@@ -452,23 +444,23 @@
       </div>
     </section>
 
-    <!-- PANE 4: Tasks To be Approved (Image 5) -->
+    <!-- PANE 4: Approvals -->
     <section id="pane-tasks-to-approve" class="content-pane">
       <div class="planning-breakdown-layout">
         
-        <div class="glass-card planning-header-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+        <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <h2 style="font-size: 18px; font-weight: 800; color: #1e3a8a;">Tasks To be Approved</h2>
-            <div style="font-size: 12px; color: #4b5563; font-weight: 700; margin-top: 4px;">To be approved / Approved / Not Approved</div>
+            <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">Pending Approvals</h2>
+            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Review and approve maintenance requests</div>
           </div>
           
           <div style="display: flex; align-items: center; gap: 20px;">
-            <div style="font-size: 24px; font-weight: 800; color: #dc2626;" id="approve-count-badge">21</div>
-            <button class="planner-btn" style="background: #fff; border: 1px solid #71717a; color: #000; font-weight: 700;" onclick="window.print()">Print Out</button>
+            <div style="font-size: 32px; font-weight: 800; color: var(--danger);" id="approve-count-badge">21</div>
+            <button class="planner-btn" onclick="window.print()">Export</button>
           </div>
         </div>
 
-        <div class="glass-card planning-table-card" style="flex-grow: 1; display: flex; flex-direction: column;">
+        <div class="glass-card planning-table-card">
           <div style="flex-grow: 1; overflow-y: auto;">
             <table class="fm-task-list-table">
               <thead>
@@ -477,13 +469,12 @@
                   <th>Department</th>
                   <th>Date Requested</th>
                   <th>Description</th>
-                  <th>DueDate</th>
-                  <th>Approval</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="approve-table-body">
-                <!-- Dynamic tasks matching Image 5 -->
               </tbody>
             </table>
           </div>
@@ -492,7 +483,7 @@
       </div>
     </section>
 
-    <!-- PANE 5: Agent WhatsApp Simulator -->
+    <!-- PANE 5: WhatsApp Simulator -->
     <section id="pane-simulator" class="content-pane">
       <div class="simulator-layout">
         
@@ -501,32 +492,34 @@
             <div class="phone-header">
               <div class="phone-avatar">RT</div>
               <div class="phone-contact-info">
-                <div class="phone-contact-name" style="color: #fff;">NITA Dispatcher</div>
-                <div class="phone-contact-status">online • listening...</div>
+                <div class="phone-contact-name">NITA Dispatcher</div>
+                <div class="phone-contact-status">online</div>
               </div>
             </div>
             <div class="phone-chat-area" id="chat-messages">
-              <!-- Loaded Welcome messages -->
             </div>
             <div class="phone-input-bar">
               <input type="text" class="phone-input" id="chat-user-input" placeholder="Type a message...">
-              <button class="phone-send-btn" id="btn-send-message">➔</button>
+              <button class="phone-send-btn" id="btn-send-message">→</button>
             </div>
           </div>
         </div>
         
         <div class="simulator-engine-panel">
-          <div class="glass-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="fm-group-title">Scenario Quick Presets</div>
+          <div class="glass-card" style="padding: 20px;">
+            <div class="fm-group-title" style="margin-bottom: 16px;">Scenario Presets</div>
             <div class="simulator-controls">
               <button class="sim-scenario-btn" onclick="loadScenario('critical_leak')">
-                <strong>🚨 P0 Critical</strong><br>Grinding noise & line stopped on Circular Knitter.
+                <strong>P0 Critical</strong>
+                Grinding noise & line stopped on Circular Knitter.
               </button>
               <button class="sim-scenario-btn" onclick="loadScenario('urgent_tension')">
-                <strong>⚡ P1 Urgent</strong><br>Gerber cutter belt slipping on Row 1.
+                <strong>P1 Urgent</strong>
+                Gerber cutter belt slipping on Row 1.
               </button>
               <button class="sim-scenario-btn" onclick="loadScenario('normal_cosmetic')">
-                <strong>🟢 P2 Non-Urgent</strong><br>Office door latch broken.
+                <strong>P2 Non-Urgent</strong>
+                Office door latch broken.
               </button>
             </div>
           </div>
@@ -535,14 +528,13 @@
             <div class="console-header">
               <div class="console-title">
                 <span class="status-dot"></span>
-                <span>NITA System Logs & Reasoning Steps</span>
+                <span>System Logs</span>
               </div>
-              <button class="planner-btn" style="padding: 4px 8px; font-size: 10px; background: rgba(0,0,0,0.05); border: 1px solid #71717a; color: #000;" onclick="clearConsole()">
-                Clear Logs
+              <button class="planner-btn" style="padding: 6px 12px; font-size: 12px;" onclick="clearConsole()">
+                Clear
               </button>
             </div>
             <div class="console-body" id="console-logs">
-              <!-- Logs -->
             </div>
           </div>
         </div>
@@ -550,29 +542,28 @@
       </div>
     </section>
 
-    <!-- PANE 6: Technician Daily Dashboard -->
+    <!-- PANE 6: Technician Tasks -->
     <section id="pane-technician-tasks" class="content-pane">
-      <div style="display: flex; flex-direction: column; gap: 20px;">
-        <div class="glass-card" style="padding: 20px;">
-          <h2 style="font-size: 18px; font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">My Dispatched Job Queue</h2>
-          <p style="font-size: 13px; color: #4b5563;">Select active work orders to update your progress directly to the operator's console.</p>
+      <div class="tech-dashboard">
+        <div class="glass-card" style="padding: 24px;">
+          <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">My Job Queue</h2>
+          <p style="font-size: 14px; color: var(--text-secondary);">Select work orders to update your progress.</p>
         </div>
         
-        <div class="glass-card" style="padding: 20px; flex-grow: 1;">
+        <div class="glass-card" style="flex-grow: 1;">
           <table class="fm-task-list-table">
             <thead>
               <tr>
-                <th>Work Order ID</th>
+                <th>Work Order</th>
                 <th>Asset</th>
                 <th>Description</th>
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Scheduled</th>
-                <th>Lifecycle Action</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="tech-jobs-table-body">
-              <!-- JS dynamic loading -->
             </tbody>
           </table>
         </div>
@@ -583,9 +574,8 @@
     <section id="pane-api" class="content-pane">
       <div class="api-sandbox-layout">
         
-        <!-- Mock Address Bar -->
         <div class="glass-card api-url-bar">
-          <select id="api-endpoint-selector" class="api-method" style="background: #fff; color: #000; border: 1px solid #71717a; padding: 8px 12px; outline: none; cursor: pointer; border-radius: 6px; font-weight: 700;">
+          <select id="api-endpoint-selector" class="api-method">
             <option value="api-pending-approvals">GET /api-pending-approvals</option>
             <option value="api-assets">GET /api-assets</option>
             <option value="api-find-asset">GET /api-find-asset</option>
@@ -601,26 +591,25 @@
             <option value="api-feedback">POST /api-feedback</option>
             <option value="api-forward-media">POST /api-forward-media</option>
           </select>
-          <input type="text" class="api-url" id="api-url-input" value="https://bot.nelsonfodjo.me/webhook/api-pending-approvals" readonly style="background: #fff; color: #000;">
-          <button class="api-send-btn" id="btn-run-api">Send Request</button>
+          <input type="text" class="api-url" id="api-url-input" value="https://bot.nelsonfodjo.me/webhook/api-pending-approvals" readonly>
+          <button class="api-send-btn" id="btn-run-api">Send</button>
         </div>
         
         <div class="api-payloads">
           <div class="glass-card api-editor-panel">
-            <div class="fm-group-title" id="api-doc-title">API Endpoint Tester</div>
-            <div style="flex-grow: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
-              <div id="api-doc-description" style="font-size: 13px; color: #4b5563; line-height: 1.5; font-family: sans-serif;">
-                Select an endpoint from the top dropdown to view details.
+            <div class="fm-group-title" id="api-doc-title">Endpoint Details</div>
+            <div style="flex-grow: 1; overflow-y: auto; margin-top: 16px;">
+              <div id="api-doc-description" style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+                Select an endpoint from the dropdown above.
               </div>
-              <div id="api-inputs-container" style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- dynamic inputs -->
+              <div id="api-inputs-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
               </div>
             </div>
           </div>
           <div class="api-editor-panel">
-            <div class="fm-group-title">JSON Response (HTTP 200 OK)</div>
-            <div class="api-json-viewer" id="api-response-json" style="background: #0f172a; color: #38bdf8;">
-Click "Send Request" to fetch from database...
+            <div class="fm-group-title">Response</div>
+            <div class="api-json-viewer" id="api-response-json">
+Click "Send" to fetch data...
             </div>
           </div>
         </div>
@@ -628,11 +617,11 @@ Click "Send Request" to fetch from database...
       </div>
     </section>
 
-    <!-- PANE 8: Relational Database Schema Explorer -->
+    <!-- PANE 8: Database Schema -->
     <section id="pane-database" class="content-pane">
       <div class="db-layout">
-        <div class="glass-card db-list-panel" style="background: #fff;">
-          <div class="fm-dept-header" style="font-family: monospace; font-weight: 700;">Tables</div>
+        <div class="glass-card db-list-panel">
+          <div class="fm-title-banner">Tables</div>
           <div class="db-list-item active" data-table="department">department</div>
           <div class="db-list-item" data-table="app_user">app_user</div>
           <div class="db-list-item" data-table="technician">technician</div>
@@ -647,7 +636,7 @@ Click "Send Request" to fetch from database...
         <div class="glass-card db-table-viewer">
           <div class="db-schema-header">
             <h2 class="db-schema-title" id="db-table-title">TABLE department</h2>
-            <span class="status-badge" style="font-family: monospace;" id="db-table-size">4 records</span>
+            <span class="status-badge info" style="font-family: 'JetBrains Mono', monospace;" id="db-table-size">4 records</span>
           </div>
           <div style="flex-grow: 1; overflow-y: auto;">
             <table class="db-fields-table">
@@ -655,18 +644,17 @@ Click "Send Request" to fetch from database...
                 <tr>
                   <th>Field Name</th>
                   <th>Data Type</th>
-                  <th>Key / Constraint</th>
+                  <th>Key</th>
                   <th>Description</th>
                 </tr>
               </thead>
               <tbody id="db-fields-body">
-                <!-- Dynamic Fields -->
               </tbody>
             </table>
           </div>
-          <div>
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
             <div class="fm-group-title" style="margin-bottom: 12px;">Relationships</div>
-            <p id="db-relationship-text" style="font-size: 13px; color: #4b5563; font-family: 'JetBrains Mono', monospace;">
+            <p id="db-relationship-text" style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">
               None
             </p>
           </div>
@@ -674,17 +662,16 @@ Click "Send Request" to fetch from database...
       </div>
     </section>
 
-    <!-- PANE 9: Solution Design, Decision Logic, & Impact Docs -->
+    <!-- PANE 9: Documentation -->
     <section id="pane-docs" class="content-pane">
       <div class="docs-layout">
-        <aside class="docs-toc" style="background: #fff;">
+        <aside class="docs-toc">
           <div class="docs-toc-item active" data-doc="design">1. Solution Design</div>
           <div class="docs-toc-item" data-doc="logic">2. Decision Logic</div>
-          <div class="docs-toc-item" data-doc="model">3. Data Model Analysis</div>
+          <div class="docs-toc-item" data-doc="model">3. Data Model</div>
           <div class="docs-toc-item" data-doc="impact">4. Business Impact</div>
         </aside>
         <article class="glass-card docs-content" id="docs-viewport">
-          <!-- Dynamic Markdown Content -->
         </article>
       </div>
     </section>
