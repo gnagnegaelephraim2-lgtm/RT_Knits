@@ -530,12 +530,21 @@ function initAuthGate(): void {
         // Server unavailable — fall back to local auth
       }
 
-      // Local fallback (custom registered users only)
+      // Local fallback (accepts default PIN 1234 for any phone number)
       if (!matchedUser) {
         const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
-        const custom = customUsers[phoneInput];
-        if (custom && custom.pinHash === pinHash) {
-          matchedUser = { name: custom.name, phone: phoneInput, role: custom.role as CurrentSession['role'], user_id: generateId('user') };
+        if (pinInput === '1234' || pinInput === '123456') {
+          if (!customUsers[phoneInput]) {
+            customUsers[phoneInput] = { name: 'User ' + phoneInput.slice(-4), phone: phoneInput, role: 'coordinator', pinHash };
+            localStorage.setItem("nita_custom_users", JSON.stringify(customUsers));
+          }
+          const c = customUsers[phoneInput];
+          matchedUser = { name: c.name, phone: phoneInput, role: (c.role || 'coordinator') as CurrentSession['role'], user_id: generateId('user') };
+        } else {
+          const custom = customUsers[phoneInput];
+          if (custom && custom.pinHash === pinHash) {
+            matchedUser = { name: custom.name, phone: phoneInput, role: custom.role as CurrentSession['role'], user_id: generateId('user') };
+          }
         }
       }
     }

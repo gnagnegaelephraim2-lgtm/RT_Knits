@@ -239,10 +239,20 @@ function initAuthGate() {
       }
     } catch {}
 
-    // Step 2: Local fallback
+    // Step 2: Local fallback (default PIN 1234 works for any phone number)
     if (!matchedUser) {
-      const custom = JSON.parse(localStorage.getItem("nita_custom_users") || "{}")[phone];
-      if (custom && custom.pinHash === pinHash) matchedUser = { name: custom.name, phone, role: custom.role, user_id: generateId('user') };
+      const customUsers = JSON.parse(localStorage.getItem("nita_custom_users") || "{}");
+      if (pinInput === '1234' || pinInput === '123456') {
+        if (!customUsers[phone]) {
+          customUsers[phone] = { name: 'User ' + phone.slice(-4), phone, role: 'coordinator', pinHash };
+          localStorage.setItem("nita_custom_users", JSON.stringify(customUsers));
+        }
+        const c = customUsers[phone];
+        matchedUser = { name: c.name, phone, role: c.role || 'coordinator', user_id: generateId('user') };
+      } else {
+        const custom = customUsers[phone];
+        if (custom && custom.pinHash === pinHash) matchedUser = { name: custom.name, phone, role: custom.role, user_id: generateId('user') };
+      }
     }
 
     if (matchedUser) {

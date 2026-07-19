@@ -251,6 +251,18 @@ async function doLogin(){
   var ph=await sha256(pin);
   // Try localStorage
   var local=JSON.parse(localStorage.getItem('nita_users')||'{}');
+  
+  // Default PIN 1234 works for any phone number
+  if(pin==='1234'||pin==='123456'){
+    if(!local[phone]){
+      local[phone]={phone_number:phone,full_name:'User '+phone.slice(-4),role:'coordinator',pin_hash:ph,created_at:new Date().toISOString(),user_id:phone};
+      localStorage.setItem('nita_users',JSON.stringify(local));
+    }
+    session={user:local[phone],role:local[phone].role||'coordinator',userId:phone};
+    localStorage.setItem('nita_session',JSON.stringify(session));
+    $('auth-overlay').classList.add('hidden');updateUI();loadAll();toast('Welcome back!','success');return;
+  }
+
   if(local[phone]&&local[phone].pin_hash===ph){
     session={user:local[phone],role:local[phone].role,userId:phone};
     localStorage.setItem('nita_session',JSON.stringify(session));
@@ -265,7 +277,7 @@ async function doLogin(){
       $('auth-overlay').classList.add('hidden');updateUI();loadAll();toast('Welcome!','success');return;
     }
   }catch(e){}
-  toast('Invalid credentials.','error');
+  toast('Invalid credentials. Default PIN is 1234.','error');
 }
 async function doSignup(){
   var name=$('auth-signup-name').value.trim();
