@@ -454,29 +454,117 @@ function loadScenario(type){
   log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-success">NITA: Analyzing priority and required trade...</span></div>';
   log.scrollTop=log.scrollHeight;
 }
+var whatsappBotState = { awaitingDetails: false };
+
 function sendChatMessage(){
   var input=$('chat-user-input');var chat=$('chat-messages');if(!input||!input.value.trim())return;
   var now=new Date().toLocaleTimeString();
-  chat.innerHTML+='<div class="bubble outgoing"><div class="bubble-text">'+esc(input.value)+'</div><div class="bubble-time">'+now+'</div></div>';
-  var msg=input.value;input.value='';chat.scrollTop=chat.scrollHeight;
+  var msg=input.value.trim();
+  input.value='';
+  chat.innerHTML+='<div class="bubble outgoing"><div class="bubble-text">'+esc(msg)+'</div><div class="bubble-time">'+now+'</div></div>';
+  chat.scrollTop=chat.scrollHeight;
+  
   var log=$('console-logs');
-  log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">User: '+esc(msg)+'</span></div>';
-  // Simple keyword matching
+  if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">User: '+esc(msg)+'</span></div>';
+
   var lower=msg.toLowerCase();
-  if(lower.includes('leak')||lower.includes('water')){
-    log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-success">NITA: Water issue detected. Creating P1 urgent task...</span></div>';
-    chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">Water issue logged. Task created with URGENT priority. A plumber has been notified.</div><div class="bubble-time">'+now+'</div></div>';
-  } else if(lower.includes('noise')||lower.includes('grinding')){
-    log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-warn">NITA: Mechanical issue detected. Escalating to P0 CRITICAL...</span></div>';
-    chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">Critical mechanical issue logged. Line operator advised to STOP. Mechanic dispatched immediately.</div><div class="bubble-time">'+now+'</div></div>';
-  } else if(lower.includes('door')||lower.includes('light')||lower.includes('paint')){
-    log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">NITA: Non-urgent issue. Creating P2 routine task...</span></div>';
-    chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">Issue logged as routine maintenance. Will be scheduled in the next planning cycle.</div><div class="bubble-time">'+now+'</div></div>';
-  } else {
-    log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">NITA: Processing your message...</span></div>';
-    chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">Message received. Please describe the issue: What is the problem? Where is it? How urgent?</div><div class="bubble-time">'+now+'</div></div>';
+
+  // 1. Check for simple greetings or short acknowledgements
+  var isGreeting = /^(hi|hello|hey|bonjour|nita|hi nita|hey nita|salut)\b/i.test(lower) && msg.length < 20;
+
+  if (isGreeting) {
+    whatsappBotState.awaitingDetails = true;
+    if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">NITA: Greeting detected. Prompting operator for issue details...</span></div>';
+    chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">Hello! I am the NITA Dispatch Bot. Please describe your maintenance issue (e.g., machine number, problem description, and urgency level like P0, P1, or P2) so I can log it for dispatch.</div><div class="bubble-time">'+now+'</div></div>';
+    if(log) log.scrollTop=log.scrollHeight;
+    chat.scrollTop=chat.scrollHeight;
+    return;
   }
-  log.scrollTop=log.scrollHeight;chat.scrollTop=chat.scrollHeight;
+
+  // 2. Entity & Priority Extraction
+  if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">NITA: Processing message text with NLP entity parser...</span></div>';
+
+  // Determine Priority: P0 (Critical), P1 (Urgent), P2 (Normal/Routine)
+  var priority = 'medium';
+  var priorityCode = 2;
+  var priorityLabel = 'P2 NORMAL';
+
+  if (/\bp0\b|critical|emergency|stop|gro bwi|production down|grinding/i.test(lower)) {
+    priority = 'critical';
+    priorityCode = 0;
+    priorityLabel = 'P0 CRITICAL';
+  } else if (/\bp1\b|urgent|asap|leak|water|sliding|poorly|belt|high/i.test(lower)) {
+    priority = 'high';
+    priorityCode = 1;
+    priorityLabel = 'P1 URGENT';
+  } else if (/\bp2\b|normal|routine|cosmetic|door|latch|light|paint|low/i.test(lower)) {
+    priority = 'medium';
+    priorityCode = 2;
+    priorityLabel = 'P2 NORMAL';
+  } else if (whatsappBotState.awaitingDetails || /\b(machine|macine|issue|problem|broken|fault)\b/i.test(lower)) {
+    // If operator is answering prompt or mentioning a machine/issue without explicit priority tag, infer P1 Urgent
+    priority = 'high';
+    priorityCode = 1;
+    priorityLabel = 'P1 URGENT';
+  }
+
+  // Extract Asset / Machine Number (e.g., "Macine number 39", "asset 175", "line 3", "39")
+  var assetMatch = lower.match(/(?:machine|macine|asset|line|#|code)\s*#?\s*([0-9]+)/i) || lower.match(/\b([0-9]{1,4})\b/);
+  var extractedAssetId = assetMatch ? assetMatch[1] : null;
+
+  var matchedAsset = null;
+  if (extractedAssetId && typeof assets !== 'undefined' && assets.length > 0) {
+    matchedAsset = assets.find(function(a){ return a.asset_code === extractedAssetId || String(a.asset_id) === extractedAssetId; });
+  }
+
+  var assetName = matchedAsset ? matchedAsset.name : (extractedAssetId ? 'Machine #' + extractedAssetId : 'Circular Knitter CK-8');
+  var assetCode = matchedAsset ? (matchedAsset.asset_code || matchedAsset.asset_id) : (extractedAssetId || '39');
+  var realAssetId = matchedAsset ? matchedAsset.asset_id : assetCode;
+
+  if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-success">NITA: Slot Extracted -> Asset: '+esc(assetName)+' (ID: '+esc(assetCode)+'), Priority: '+priorityLabel+'</span></div>';
+
+  // 3. Create Task Request Record
+  var taskId = 'TR-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+  var newTask = {
+    task_request_id: taskId,
+    asset_id: realAssetId,
+    created_by_user_id: (session && session.user && session.user.full_name) ? session.user.full_name : 'Operator Priya',
+    created_by_role: 'Operator',
+    status: 'pending',
+    priority: priorityCode === 0 ? 'critical' : (priorityCode === 1 ? 'high' : 'medium'),
+    requested_at: new Date().toISOString(),
+    description: msg,
+    task_type: 'New Task'
+  };
+
+  if (typeof taskRequests !== 'undefined') {
+    taskRequests.unshift(newTask);
+    if (typeof rebuildCaches === 'function') rebuildCaches();
+    if (typeof renderAll === 'function') renderAll();
+  }
+
+  if (typeof supaInsert === 'function') {
+    supaInsert('task_request', newTask).catch(function(e){});
+  }
+
+  // 4. Dispatch WhatsApp Confirmation Response
+  var replyText = '';
+  if (priorityCode === 0) {
+    replyText = '🚨 **P0 CRITICAL** task created for ' + assetName + '. Line operator advised to STOP. Mechanic dispatched immediately (Ref #' + taskId.slice(0,8) + ').';
+    if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-warn">NITA: Escalating to P0 CRITICAL. Dispatching mechanic...</span></div>';
+  } else if (priorityCode === 1) {
+    replyText = '⚠️ **P1 URGENT** task created for ' + assetName + '. Request #' + taskId.slice(0,8) + ' logged and submitted to Coordinator Dashboard for approval.';
+    if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-success">NITA: Logged P1 Urgent task request #' + taskId.slice(0,8) + '.</span></div>';
+  } else {
+    replyText = 'ℹ️ Routine **P2 Normal** task request #' + taskId.slice(0,8) + ' logged for ' + assetName + '. Scheduled for next maintenance window.';
+    if(log) log.innerHTML+='<div class="log-line"><span class="log-time">['+now+']</span> <span class="log-info">NITA: Logged P2 routine task request.</span></div>';
+  }
+
+  chat.innerHTML+='<div class="bubble incoming"><div class="bubble-text">'+esc(replyText)+'</div><div class="bubble-time">'+now+'</div></div>';
+  whatsappBotState.awaitingDetails = false;
+
+  if(log) log.scrollTop=log.scrollHeight;
+  chat.scrollTop=chat.scrollHeight;
 }
 function clearConsole(){var c=$('console-logs');if(c)c.innerHTML='';}
 

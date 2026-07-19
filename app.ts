@@ -1717,6 +1717,8 @@ function loadScenario(preset: 'critical_leak' | 'urgent_tension' | 'normal_cosme
 (window as any).loadScenario = loadScenario;
 (window as any).clearConsole = clearConsole;
 
+let tsBotState = { awaitingDetails: false };
+
 function processUserMessage(text: string): void {
   if (!text.trim()) return;
   
@@ -1725,37 +1727,69 @@ function processUserMessage(text: string): void {
   renderChat();
   if (chatUserInput) chatUserInput.value = '';
   
+  const lower = text.toLowerCase();
+  const isGreeting = /^(hi|hello|hey|bonjour|nita|hi nita|hey nita|salut)\b/i.test(lower) && text.length < 20;
+
+  if (isGreeting) {
+    tsBotState.awaitingDetails = true;
+    setTimeout(() => addLog("Inbound WhatsApp webhook received from +23052000101 (Operator Priya Singh).", "info"), 300);
+    setTimeout(() => {
+      const promptText = "Hello! I am the NITA Dispatch Bot. Please describe your maintenance issue (e.g., machine number, problem description, and urgency level like P0, P1, or P2) so I can log it for dispatch.";
+      initialConversations.push({ sender: 'ai', text: promptText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+      renderChat();
+      addLog("NITA: Prompted operator for issue details.", "info");
+    }, 800);
+    return;
+  }
+
   setTimeout(() => addLog("Inbound WhatsApp webhook received from +23052000101 (Operator Priya Singh).", "info"), 400);
-  setTimeout(() => addLog("Analyzing message text language...", "info"), 800);
+  setTimeout(() => addLog("Analyzing message text & extracting entities with NLP engine...", "info"), 800);
   
-  let detectedAsset = "Unknown";
-  let assetCode = "Unknown";
-  let trade: TradeType = "general";
-  let priority = 2;
+  let detectedAsset = "Circular Knitter — Brother CK-8";
+  let assetCode = "39";
+  let trade: TradeType = "mechanic";
+  let priority = 1;
   let responseText = "";
 
-  if (text.toLowerCase().includes("knitt") || text.toLowerCase().includes("circular") || text.toLowerCase().includes("bwi")) {
-    detectedAsset = "Circular Knitter — Brother CK-8";
-    assetCode = "39";
-    trade = "mechanic";
+  // Priority Extraction
+  if (/\bp0\b|critical|emergency|stop|gro bwi|production down|grinding/i.test(lower)) {
     priority = 0;
-    responseText = "Detected **Circular Knitter (Asset 39)**. This has been marked as a **P0 Critical** (Production Down) issue. Requesting mechanic dispatch. Please approve on the dashboard.";
-  } else if (text.toLowerCase().includes("gerber") || text.toLowerCase().includes("belt") || text.toLowerCase().includes("cut")) {
+  } else if (/\bp1\b|urgent|asap|leak|water|sliding|poorly|belt|high/i.test(lower)) {
+    priority = 1;
+  } else if (/\bp2\b|normal|routine|cosmetic|door|latch|light|paint|low/i.test(lower)) {
+    priority = 2;
+  } else if (tsBotState.awaitingDetails || /\b(machine|macine|issue|problem|broken|fault)\b/i.test(lower)) {
+    priority = 1;
+  }
+
+  // Asset Extraction
+  const assetMatch = lower.match(/(?:machine|macine|asset|line|#|code)\s*#?\s*([0-9]+)/i) || lower.match(/\b([0-9]{1,4})\b/);
+  const extractedAssetId = assetMatch ? assetMatch[1] : null;
+
+  if (extractedAssetId === "175" || lower.includes("gerber") || lower.includes("belt") || lower.includes("cut")) {
     detectedAsset = "Cutting Machine — Gerber Z1";
     assetCode = "175";
     trade = "mechanic";
-    priority = 1;
-    responseText = "Detected **Gerber Z1 Cutting Machine (Asset 175)**. Marked as **P1 Urgent**. I am recommending a Mechanic to tension the belt.";
-  } else {
+  } else if (extractedAssetId === "42" || lower.includes("door") || lower.includes("latch") || lower.includes("gate")) {
     detectedAsset = "Office Gate / Latch";
     assetCode = "42";
     trade = "general";
-    priority = 2;
-    responseText = "Thank you. I have logged an inspection request for the **Office Latch/Gate**. Assigned as a **P2 Non-Urgent** task.";
+  } else {
+    detectedAsset = extractedAssetId ? `Machine #${extractedAssetId}` : "Circular Knitter — Brother CK-8";
+    assetCode = extractedAssetId || "39";
+    trade = "mechanic";
+  }
+
+  if (priority === 0) {
+    responseText = `🚨 **P0 CRITICAL** issue logged for **${detectedAsset} (Asset ${assetCode})**. Production line advised to STOP. Mechanic requested immediately.`;
+  } else if (priority === 1) {
+    responseText = `⚠️ **P1 URGENT** issue logged for **${detectedAsset} (Asset ${assetCode})**. Dispatch request submitted to Coordinator Dashboard for approval.`;
+  } else {
+    responseText = `ℹ️ Routine **P2 Normal** issue logged for **${detectedAsset} (Asset ${assetCode})**. Scheduled for upcoming maintenance cycle.`;
   }
 
   setTimeout(() => {
-    if (text.toLowerCase().includes("gro bwi") || text.toLowerCase().includes("arete")) {
+    if (lower.includes("gro bwi") || lower.includes("arete")) {
       addLog("Language detected: Kreol (Mauritian Creole). Translating to English...", "warn");
       addLog("Translation: 'I am hearing a very loud grinding noise on knitting floor. Brother Circular Knitter line 3 has stopped completely!'", "success");
     } else {
@@ -1764,11 +1798,11 @@ function processUserMessage(text: string): void {
   }, 1200);
 
   setTimeout(() => {
-    addLog(`Running NER. Extracted slots: Asset Type: ${detectedAsset}, Code: ${assetCode}`, "success");
+    addLog(`Running NER. Extracted slots: Asset: ${detectedAsset}, Code: ${assetCode}`, "success");
   }, 1800);
 
   setTimeout(() => {
-    addLog(`Classifying task criteria: Priority ${priority}, Required Trade: ${trade}`, "warn");
+    addLog(`Classifying task criteria: Priority P${priority}, Required Trade: ${trade}`, "warn");
   }, 2400);
 
   setTimeout(() => {
@@ -1778,7 +1812,7 @@ function processUserMessage(text: string): void {
     const newTask: TaskRequest = {
       task_request_id: newTaskId,
       asset_id: assetCode,
-      created_by_user_id: activeSession ? activeSession.name : "Operator",
+      created_by_user_id: activeSession ? activeSession.name : "Operator Priya",
       status: "pending_approval",
       priority: priority,
       requested_at: new Date().toISOString(),
@@ -1804,6 +1838,7 @@ function processUserMessage(text: string): void {
     
     const aiTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     initialConversations.push({ sender: 'ai', text: responseText, time: aiTimeStr });
+    tsBotState.awaitingDetails = false;
     renderChat();
     addLog("AI Response message dispatched to WhatsApp gateway successfully.", "success");
   }, 3000);
