@@ -853,14 +853,62 @@ let selectedDeptId = departments[0].department_id;
 
 function renderFmDashboard(): void {
   const pendingCount = taskRequests.filter(t => t.status === 'pending_approval').length;
+  const criticalCount = taskRequests.filter(t => t.priority === 0 && (t.status === 'pending_approval' || t.status === 'in_progress')).length;
+  const activeDispatches = workOrders.filter(w => w.status === 'in_progress').length;
+  const activeTechs = technicians.filter(t => t.active).length;
+
   if (fmBadgeApproval) fmBadgeApproval.textContent = pendingCount.toString();
-  
+
+  const statsGrid = document.getElementById('stats-grid');
+  if (statsGrid) {
+    statsGrid.innerHTML = `
+      <div class="stat-card ${criticalCount > 0 ? 'stat-red' : 'stat-green'}">
+        <div class="stat-num">${criticalCount}</div>
+        <div class="stat-label">P0 Critical Alerts</div>
+      </div>
+      <div class="stat-card stat-amber">
+        <div class="stat-num">${pendingCount}</div>
+        <div class="stat-label">Pending Approvals</div>
+      </div>
+      <div class="stat-card stat-cyan">
+        <div class="stat-num">${activeDispatches}</div>
+        <div class="stat-label">Active Dispatches</div>
+      </div>
+      <div class="stat-card stat-accent">
+        <div class="stat-num">${activeTechs}</div>
+        <div class="stat-label">Technicians On-Duty</div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-num">99.8%</div>
+        <div class="stat-label">Plant SLA Target</div>
+      </div>
+      <div class="stat-card stat-cyan">
+        <div class="stat-num">${assets.length}</div>
+        <div class="stat-label">Registered Assets</div>
+      </div>
+    `;
+  }
+
   if (fmDeptTable) {
     fmDeptTable.innerHTML = '';
     departments.forEach(dept => {
+      const deptTasks = taskRequests.filter(t => {
+        const a = assetIdMap.get(t.asset_id);
+        return a && a.dept_id === dept.department_id;
+      });
+      const hasCritical = deptTasks.some(t => t.priority === 0 && t.status !== 'completed');
+      const statusBadge = hasCritical 
+        ? `<span class="badge badge-p0" style="padding:2px 8px; font-size:10px;">LINE STOP</span>` 
+        : `<span class="badge badge-success" style="padding:2px 8px; font-size:10px;">OPERATIONAL</span>`;
+
       const tr = document.createElement('tr');
       if (dept.department_id === selectedDeptId) tr.classList.add('active');
-      tr.innerHTML = `<td>${esc(dept.name)}</td>`;
+      tr.innerHTML = `
+        <td style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px;">
+          <span style="font-weight:700; color:var(--text);">${esc(dept.name)}</span>
+          ${statusBadge}
+        </td>
+      `;
       tr.addEventListener('click', () => {
         selectedDeptId = dept.department_id;
         renderFmDashboard();
@@ -872,7 +920,8 @@ function renderFmDashboard(): void {
   const current = deptMap.get(selectedDeptId);
   if (current) {
     if (fmDetailDeptName) fmDetailDeptName.textContent = current.name;
-    if (rtDeptTitle) rtDeptTitle.textContent = current.name;
+    if (fmDetailDeptLoc) fmDetailDeptLoc.textContent = current.location || 'Main Plant Floor';
+    if (rtDeptTitle) rtDeptTitle.textContent = `${current.name} Dashboard`;
   }
 }
 
@@ -924,18 +973,29 @@ function renderTaskEntryTable(): void {
     tr.className = statusClass;
     if (task.task_request_id === selectedTaskId) tr.classList.add('selected');
     
-    const priLabel = task.priority === 0 ? 'P0' : task.priority === 1 ? 'P1' : 'P2';
+    let priBadge = '<span class="badge badge-p2">P2 NORMAL</span>';
+    if (task.priority === 0) priBadge = '<span class="badge badge-p0">P0 CRITICAL</span>';
+    else if (task.priority === 1) priBadge = '<span class="badge badge-p1">P1 URGENT</span>';
+
+    const statusBadge = task.status === 'completed'
+      ? '<span class="badge badge-success">COMPLETED</span>'
+      : task.status === 'in_progress'
+      ? '<span class="badge badge-warning">IN PROGRESS</span>'
+      : task.status === 'approved'
+      ? '<span class="badge badge-info">APPROVED</span>'
+      : '<span class="badge badge-pending">PENDING</span>';
+
     const dateStr = new Date(task.requested_at).toLocaleDateString();
 
     tr.innerHTML = `
-      <td>${esc(task.asset_id)}</td>
-      <td style="font-weight:600;">${esc(assetName)}</td>
+      <td class="mono" style="font-weight:700; color:var(--text);">${esc(task.asset_id)}</td>
+      <td style="font-weight:700;">${esc(assetName)}</td>
       <td>${esc(task.task_type)}</td>
-      <td style="max-width: 150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(task.description)}</td>
-      <td>${task.priority === 0 ? 'Urgent' : 'Normal'}</td>
-      <td>${priLabel}</td>
-      <td>${dateStr}</td>
-      <td><span class="circular-select-icon"></span></td>
+      <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(task.description)}</td>
+      <td>${priBadge}</td>
+      <td>${statusBadge}</td>
+      <td class="mono-text">${dateStr}</td>
+      <td><span class="radio-dot"></span></td>
     `;
     
     tr.addEventListener('click', () => {
@@ -1295,28 +1355,28 @@ function renderApprovalTable(): void {
     const dateStr = new Date(task.requested_at).toLocaleDateString();
     const escapedId = esc(task.task_request_id);
     
+    let priBadge = '<span class="badge badge-p2">P2 NORMAL</span>';
+    if (task.priority === 0) priBadge = '<span class="badge badge-p0">P0 CRITICAL</span>';
+    else if (task.priority === 1) priBadge = '<span class="badge badge-p1">P1 URGENT</span>';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="font-family:monospace; font-weight:700;">${escapedId}</td>
+      <td class="mono" style="font-weight:700; color:var(--accent-light);">${escapedId}</td>
       <td>
-        <div style="font-weight:700;">${esc(task.created_by_role || 'operator')}</div>
-        <div style="font-size:11px; color:#4b5563;">${esc(task.created_by_user_id)}</div>
+        <div style="font-weight:700; color:var(--text);">${esc(task.created_by_role || 'operator')}</div>
+        <div style="font-size:11px; color:var(--text-3);">${esc(task.created_by_user_id)}</div>
       </td>
-      <td>${dateStr}</td>
-      <td style="max-width:300px; line-height:1.4;">${esc(task.description)}</td>
-      <td>${dateStr}</td>
+      <td class="mono-text">${dateStr}</td>
+      <td style="max-width:280px; line-height:1.4;">${esc(task.description)}</td>
+      <td>${priBadge}</td>
       <td>
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <label style="font-size:11px; color:#dc2626; font-weight:700; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="radio" name="approval-state-${escapedId}" value="approve" onclick="dispatchDirectApproval('${escapedId}', 'approve')"> Approved
-          </label>
-          <label style="font-size:11px; color:#374151; font-weight:700; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
-            <input type="radio" name="approval-state-${escapedId}" value="reject" onclick="dispatchDirectApproval('${escapedId}', 'reject')"> Not Approved
-          </label>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-approve" onclick="dispatchDirectApproval('${escapedId}', 'approve')">Approve</button>
+          <button class="btn-reject" onclick="dispatchDirectApproval('${escapedId}', 'reject')">Reject</button>
         </div>
       </td>
       <td>
-        <button class="planner-btn" style="background:#f1f5f9; border:1px solid #71717a; color:#000; font-size:11px; font-weight:700;" onclick="approveTaskImmediate('${escapedId}')">Engineer ➔</button>
+        <button class="btn-primary" style="padding:6px 12px; font-size:11px;" onclick="approveTaskImmediate('${escapedId}')">Engineer ➔</button>
       </td>
     `;
     approveTableBody.appendChild(tr);
@@ -1483,29 +1543,37 @@ function renderTechnicianDailyJobs(): void {
     let buttonActionHTML = '';
     if (wo.status === 'pending') {
       buttonActionHTML = `
-        <button class="planner-btn primary" style="font-size:11px; padding:4px 8px; margin-right:6px;" onclick="techUpdateJob('${wo.work_order_id}', 'start')">Start Job</button>
-        <button class="planner-btn" style="background:#ef4444; font-size:11px; padding:4px 8px; color:#fff;" onclick="techUpdateJob('${wo.work_order_id}', 'decline')">Decline</button>
+        <button class="btn-primary" style="font-size:12px; padding:8px 14px; margin-right:6px;" onclick="techUpdateJob('${wo.work_order_id}', 'start')">🛠 Start Work</button>
+        <button class="btn-danger" style="font-size:12px; padding:8px 14px;" onclick="techUpdateJob('${wo.work_order_id}', 'decline')">Decline</button>
       `;
     } else if (wo.status === 'in_progress') {
       buttonActionHTML = `
-        <button class="planner-btn" style="background:#10b981; font-size:11px; padding:4px 8px; color:#fff;" onclick="techUpdateJob('${wo.work_order_id}', 'done')">Mark Completed</button>
+        <button class="btn-success" style="font-size:12px; padding:8px 14px;" onclick="techUpdateJob('${wo.work_order_id}', 'done')">✅ Mark Completed</button>
       `;
     } else {
-      buttonActionHTML = `<span style="font-size:12px; color:var(--text-muted); font-weight:600;">Job Closed</span>`;
+      buttonActionHTML = `<span class="badge badge-success">Job Closed</span>`;
     }
 
+    let priBadge = '<span class="badge badge-p2">P2 NORMAL</span>';
+    if (task.priority === 0) priBadge = '<span class="badge badge-p0">P0 CRITICAL</span>';
+    else if (task.priority === 1) priBadge = '<span class="badge badge-p1">P1 URGENT</span>';
+
     const scheduledDate = wo.scheduled_start ? new Date(wo.scheduled_start).toLocaleDateString() : '—';
-    const statusColor = wo.status === 'completed' ? '#10b981' : wo.status === 'in_progress' ? '#f59e0b' : '#6b7280';
+    const statusBadge = wo.status === 'completed' 
+      ? '<span class="badge badge-success">COMPLETED</span>' 
+      : wo.status === 'in_progress' 
+      ? '<span class="badge badge-warning">IN PROGRESS</span>' 
+      : '<span class="badge badge-pending">DISPATCHED</span>';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="font-family:monospace; font-weight:600;">${esc(wo.work_order_id)}</td>
-      <td style="font-weight:600; color:var(--fm-blue-dark);">${esc(assetDisplay)}</td>
-      <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(task.description)}</td>
-      <td style="color:${task.priority === 0 ? 'var(--p0-critical)' : 'var(--p2-normal)'}; font-weight:700;">P${task.priority}</td>
-      <td><span class="status-badge" style="font-size:11px; padding:2px 8px; background:${statusColor}20; color:${statusColor}; border:1px solid ${statusColor}40;">${esc(wo.status)}</span></td>
-      <td>${scheduledDate}</td>
-      <td>${buttonActionHTML}</td>
+      <td class="mono" style="font-weight:700; color:var(--accent-light);">${esc(wo.work_order_id)}</td>
+      <td style="font-weight:700; color:var(--text);">${esc(assetDisplay)}</td>
+      <td style="max-width:250px; line-height:1.4;">${esc(task.description)}</td>
+      <td>${priBadge}</td>
+      <td>${statusBadge}</td>
+      <td class="mono-text">${scheduledDate}</td>
+      <td style="white-space:nowrap;">${buttonActionHTML}</td>
     `;
     techJobsBody.appendChild(tr);
   });

@@ -116,6 +116,11 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span data-i18n="nav_docs">Documentation</span>
     </a>
+    <div style="flex-grow:1"></div>
+    <a class="nav-item" data-target="pane-profile" id="menu-profile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </a>
   </nav>
 
   <div class="sidebar-footer">
@@ -124,10 +129,16 @@
   </div>
 </aside>
 
+<!-- ==================== SIDEBAR OVERLAY ==================== -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
 <!-- ==================== MAIN ==================== -->
 <main class="main">
   <header class="topbar">
     <div class="topbar-left">
+      <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <img src="favicon.svg" alt="RT" class="topbar-logo">
       <div>
         <div class="topbar-title">NITA Maintenance</div>
@@ -156,6 +167,7 @@
           </div>
         </div>
         <div class="card card-actions">
+          <div id="stats-grid" class="stats-grid"></div>
           <div class="action-grid">
             <button class="action-btn accent" onclick="navigateTo('pane-tasks-to-approve')"><span data-i18n="dash_approvals">Pending Approvals</span></button>
             <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="nav_planning">Planning</span></button>
@@ -248,9 +260,8 @@
             <label class="field-label" data-i18n="task_description">Description</label>
             <textarea class="field-input" id="te-description" rows="3"></textarea>
             <div class="btn-row">
-              <button class="btn-outline" onclick="teNewForm()" data-i18n="task_new_btn">+ New</button>
-              <button class="btn-success" onclick="teConfirmForm()" data-i18n="task_confirm">Confirm</button>
-              <button class="btn-danger" onclick="teDeleteForm()" data-i18n="task_delete">Delete</button>
+              <button class="btn-primary" id="btn-te-create" style="flex:2">Submit Request</button>
+              <button class="btn-outline" onclick="document.getElementById('te-asset-code').value='';document.getElementById('te-asset-name').value='';document.getElementById('te-description').value='';">Clear</button>
             </div>
           </div>
         </div>
@@ -433,6 +444,13 @@
           <h3>Architecture</h3>
           <p>Stack: Rust (Actix-web) server + vanilla JS frontend + Supabase (PostgreSQL) + Vercel hosting. Integrates WhatsApp via n8n for Creole/English voice-to-task triage pipeline.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- PANE: Profile -->
+    <section id="pane-profile" class="content-pane">
+      <div class="profile-grid">
+        <div class="card" id="profile-content" style="padding:0"></div>
       </div>
     </section>
 
