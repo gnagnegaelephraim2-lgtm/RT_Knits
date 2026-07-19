@@ -1,39 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <style>
-      .rt-red { fill: #e30613; }
-      .rt-blue { fill: #004b97; }
-      .rt-letter-r {
-        font-family: 'Arial Black', Arial, Helvetica, sans-serif;
-        font-weight: 900;
-        font-style: italic;
-        font-size: 50px;
-        fill: #e30613;
-      }
-      .rt-letter-t {
-        font-family: 'Arial Black', Arial, Helvetica, sans-serif;
-        font-weight: 900;
-        font-style: italic;
-        font-size: 50px;
-        fill: #004b97;
-      }
-    </style>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- White Background Circle -->
+  <circle cx="200" cy="200" r="192" fill="#ffffff" stroke="#f0f0f0" stroke-width="4"/>
 
-  <!-- White Base Circle -->
-  <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#f0f0f0" stroke-width="2"/>
+  <!-- Red Upper-Left Swoosh Arc -->
+  <path fill="#e30613" d="M 200 10 C 110 10 30 65 5 150 C -15 210 0 280 40 330 C 5 270 0 190 35 125 C 70 60 135 25 200 10 Z" />
+  <path fill="#e30613" d="M 200 10 C 255 10 305 35 340 80 C 300 40 250 20 200 10 Z" />
 
-  <!-- Red Top-Left Swoosh Arc -->
-  <path class="rt-red" d="M 50 4 A 46 46 0 0 0 4 50 C 4 24 24 6 50 4 Z" />
-  <path class="rt-red" d="M 50 4 C 73 4 87 18 92 28 C 81 14 66 6 50 4 Z" />
+  <!-- Blue Lower-Right Swoosh Arc -->
+  <path fill="#004b97" d="M 200 390 C 290 390 370 335 395 250 C 415 190 400 120 360 70 C 395 130 400 210 365 275 C 330 340 265 375 200 390 Z" />
+  <path fill="#004b97" d="M 200 390 C 145 390 95 365 60 320 C 100 360 150 380 200 390 Z" />
 
-  <!-- Blue Bottom-Right Swoosh Arc -->
-  <path class="rt-blue" d="M 50 96 A 46 46 0 0 0 96 50 C 96 76 76 94 50 96 Z" />
-  <path class="rt-blue" d="M 50 96 C 27 96 13 82 8 72 C 19 86 34 94 50 96 Z" />
+  <!-- Red Stylized 'R' -->
+  <path fill="#e30613" d="M 72 305 L 128 105 L 205 105 C 248 105 275 122 269 158 C 263 190 234 208 192 212 L 232 305 L 178 305 L 144 220 L 122 220 L 98 305 Z M 134 180 L 178 180 C 205 180 220 169 222 155 C 224 141 213 132 190 132 L 148 132 Z" />
 
-  <!-- Stylized Red 'R' -->
-  <text x="32" y="67" class="rt-letter-r" text-anchor="middle">R</text>
-
-  <!-- Stylized Blue 'T' -->
-  <text x="65" y="67" class="rt-letter-t" text-anchor="middle">T</text>
+  <!-- Blue Stylized 'T' -->
+  <path fill="#004b97" d="M 260 105 L 375 105 L 364 145 L 306 145 L 264 305 L 216 305 L 258 145 L 225 145 L 235 105 Z" />
 </svg>

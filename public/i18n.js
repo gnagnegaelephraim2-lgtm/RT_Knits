@@ -1,611 +1,319 @@
 // ============================================================
-// RT KNITS — NITA CMMS Internationalization (i18n)
+// NITA i18n — Working Language System
 // ============================================================
 
-const translations = {
-  en: {
-    // Auth
-    login_subtitle: "RT Knits Maintenance Portal",
-    sign_in: "Sign In",
-    sign_up: "Sign Up",
-    phone_label: "Phone Number",
-    pin_label: "PIN",
-    phone_placeholder: "+230 5XXX XXXX",
-    pin_placeholder: "Enter PIN",
-    create_account: "Create Account",
-    full_name: "Full Name",
-    role: "Role",
-    department: "Department",
-    select_department: "Select Department",
-    trade: "Trade",
-    create_pin: "Create PIN (4-6 digits)",
-    operator: "Operator",
-    technician: "Technician",
-    coordinator: "Coordinator",
-    
-    // Sidebar
-    dashboard: "Dashboard",
-    planning: "Planning",
-    task_entry: "Task Entry",
-    approvals: "Approvals",
-    whatsapp_sim: "WhatsApp Sim",
-    my_tasks: "My Tasks",
-    api_sandbox: "API Sandbox",
-    data_model: "Data Model",
-    documentation: "Documentation",
-    mauritius: "RT Knits — Mauritius",
-    sla_target: "SLA Target: 99.8%",
-    
-    // Dashboard
-    coordinator_dashboard: "Coordinator Dashboard",
-    departments: "Departments",
-    approvals_count: "Approvals",
-    planning_btn: "Planning",
-    immediate: "Immediate",
-    planned: "Planned",
-    technicians: "Technicians",
-    work_orders: "Work Orders",
-    special_task: "Special Task",
-    reports: "Reports",
-    edit_planned: "Edit Planned",
-    tech_status: "Tech Status",
-    task_list: "Task List",
-    preventive: "Preventive",
-    tech_reports: "Tech Reports",
-    tech_dashboard: "Tech Dashboard",
-    calendar: "Calendar",
-    reset_orders: "Reset Orders",
-    asset_labels: "Asset Labels",
-    asset_register: "Asset Register",
-    multi_user: "Multi-User View",
-    order_reports: "Order Reports",
-    selected_department: "Selected Department",
-    location: "Location",
-    view_requests: "View Requests",
-    new_request: "New Request",
-    repair: "Repair",
-    projects: "Projects",
-    
-    // Planning
-    leakage: "Leakage",
-    repairs: "Repairs",
-    pending: "Pending",
-    approved: "Approved",
-    technician_label: "Technician",
-    duration: "Duration (min)",
-    person_in_charge: "Person in Charge",
-    backup: "Backup",
-    start_date: "Start Date",
-    finish_date: "Finish Date",
-    asset_filter: "Asset Filter:",
-    search: "Search:",
-    dispatch_engineer: "Dispatch Engineer",
-    
-    // Task Entry
-    new_task: "New Task — Repair",
-    asset_code: "Asset Code",
-    search_btn: "Search",
-    asset_name: "Asset Name",
-    asset_type: "Asset Type",
-    serial: "Serial",
-    location_detail: "Location Detail",
-    urgency: "Urgency",
-    urgent_repairs: "Urgent Repairs",
-    needed_repairs: "Needed Repairs",
-    improvements: "Improvements & Projects",
-    description: "Description",
-    new_btn: "+ New",
-    confirm: "Confirm",
-    delete: "Delete",
-    task_list_title: "Task List",
-    planned: "Planned",
-    deleted: "Deleted",
-    rework: "Rework",
-    unplanned: "Unplanned",
-    
-    // Approvals
-    pending_approvals: "Pending Approvals",
-    review_subtitle: "Review and approve maintenance requests",
-    export: "Export",
-    date_requested: "Date Requested",
-    due_date: "Due Date",
-    status: "Status",
-    action: "Action",
-    
-    // WhatsApp
-    scenario_presets: "Scenario Presets",
-    clear: "Clear",
-    system_logs: "System Logs",
-    type_message: "Type a message...",
-    
-    // Technician
-    my_job_queue: "My Job Queue",
-    select_work_orders: "Select work orders to update your progress.",
-    work_order: "Work Order",
-    scheduled: "Scheduled",
-    
-    // API
-    endpoint_details: "Endpoint Details",
-    select_endpoint: "Select an endpoint from the dropdown above.",
-    send: "Send",
-    response: "Response",
-    
-    // Database
-    tables: "Tables",
-    field_name: "Field Name",
-    data_type: "Data Type",
-    key: "Key",
-    relationships: "Relationships",
-    
-    // Docs
-    solution_design: "1. Solution Design",
-    decision_logic: "2. Decision Logic",
-    data_model_doc: "3. Data Model",
-    business_impact: "4. Business Impact"
+window.NITA_I18N = {
+  currentLang: localStorage.getItem('nita_lang') || 'en',
+
+  translations: {
+    en: {
+      // Auth
+      login_subtitle: "RT Knits Maintenance Portal",
+      sign_in: "Sign In", sign_up: "Sign Up",
+      phone_label: "Phone Number", pin_label: "PIN",
+      phone_placeholder: "+230 5XXX XXXX", pin_placeholder: "Enter your PIN",
+      create_account: "Create Account", full_name: "Full Name",
+      role_label: "Role", department: "Department",
+      select_department: "Select Department", trade: "Trade",
+      create_pin: "Create PIN (4-6 digits)",
+      operator: "Operator", technician: "Technician", coordinator: "Coordinator",
+      // Nav
+      nav_dashboard: "Dashboard", nav_planning: "Planning", nav_tasks: "Task Entry",
+      nav_approvals: "Approvals", nav_simulator: "WhatsApp Sim",
+      nav_my_tasks: "My Tasks", nav_api: "API Sandbox",
+      nav_data: "Data Model", nav_docs: "Documentation",
+      // Dashboard
+      dash_title: "Coordinator Dashboard",
+      dash_departments: "Departments", dash_approvals: "Pending Approvals",
+      dash_immediate: "Immediate Planning", dash_planned: "Planned",
+      dash_technicians: "Technicians", dash_work_orders: "Work Orders",
+      dash_reports: "Reports", dash_special: "Special Task",
+      dash_tech_status: "Tech Status", dash_task_list: "Task List",
+      dash_preventive: "Preventive", dash_calendar: "Calendar",
+      dash_asset_register: "Asset Register", dash_reset: "Reset Orders",
+      dash_selected_dept: "Selected Department", dash_location: "Location",
+      dash_view_requests: "View Requests", dash_new_request: "New Request",
+      dash_repair: "Repair", dash_projects: "Projects & Improvements",
+      // Planning
+      plan_leakage: "Leakage Requests", plan_repairs: "Planning Repairs",
+      plan_pending: "Engineer Pending", plan_approved: "Engineer Approved",
+      plan_technician: "Technician", plan_duration: "Duration (min)",
+      plan_charge: "Person in Charge", plan_backup: "Backup",
+      plan_start: "Start Date", plan_finish: "Finish Date",
+      plan_search: "Search:", plan_dispatch: "Dispatch Engineer",
+      // Task Entry
+      task_new: "New Task", task_asset_code: "Asset Code",
+      task_search: "Search", task_asset_name: "Asset Name",
+      task_type: "Asset Type", task_serial: "Serial",
+      task_dept: "Department", task_location: "Location",
+      task_urgency: "Urgency", task_description: "Description",
+      task_urgent: "Urgent Repairs", task_needed: "Needed Repairs",
+      task_improvements: "Improvements & Projects",
+      task_new_btn: "+ New", task_confirm: "Confirm", task_delete: "Delete",
+      task_list: "Task List", task_planned: "Planned",
+      task_deleted: "Deleted", task_rework: "Rework", task_unplanned: "Unplanned",
+      // Approvals
+      approve_title: "Pending Approvals",
+      approve_subtitle: "Review and approve maintenance requests",
+      approve_export: "Print Out", approve_date: "Date Requested",
+      approve_due: "Due Date", approve_status: "Status", approve_action: "Action",
+      approve_yes: "Approved", approve_no: "Not Approved",
+      // WhatsApp
+      wa_presets: "Scenario Quick Presets",
+      wa_logs: "NITA System Logs & Reasoning",
+      wa_clear: "Clear Logs", wa_placeholder: "Type a message...",
+      // Technician
+      tech_queue: "My Dispatched Job Queue",
+      tech_desc: "Select active work orders to update your progress.",
+      tech_work_order: "Work Order ID", tech_asset: "Asset",
+      tech_scheduled: "Scheduled", tech_action: "Lifecycle Action",
+      // API
+      api_title: "API Endpoint Tester",
+      api_desc: "Select an endpoint from the top dropdown to view details.",
+      api_send: "Send Request", api_response: "JSON Response",
+      // Database
+      db_tables: "Tables", db_field: "Field Name",
+      db_type: "Data Type", db_key: "Key / Constraint",
+      db_desc: "Description", db_relations: "Relationships",
+      // Docs
+      doc_solution: "1. Solution Design", doc_logic: "2. Decision Logic",
+      doc_model: "3. Data Model Analysis", doc_impact: "4. Business Impact",
+      // Misc
+      logout: "Log Out", host: "RT Knits (Mauritius)", sla: "SLA Target: 99.8%",
+      server: "Maintenance Database", save: "Save"
+    },
+
+    fr: {
+      login_subtitle: "Portail de Maintenance RT Knits",
+      sign_in: "Connexion", sign_up: "Inscription",
+      phone_label: "Numéro de Téléphone", pin_label: "PIN",
+      phone_placeholder: "+230 5XXX XXXX", pin_placeholder: "Entrez votre PIN",
+      create_account: "Créer un Compte", full_name: "Nom Complet",
+      role_label: "Rôle", department: "Département",
+      select_department: "Sélectionner un Département", trade: "Métier",
+      create_pin: "Créer un PIN (4-6 chiffres)",
+      operator: "Opérateur", technician: "Technicien", coordinator: "Coordinateur",
+      nav_dashboard: "Tableau de Bord", nav_planning: "Planification",
+      nav_tasks: "Saisie de Tâche", nav_approvals: "Approbations",
+      nav_simulator: "Simulateur WhatsApp", nav_my_tasks: "Mes Tâches",
+      nav_api: "Bac à Sable API", nav_data: "Modèle de Données",
+      nav_docs: "Documentation",
+      dash_title: "Tableau de Bord Coordinateur",
+      dash_departments: "Départements", dash_approvals: "Approbations en Attente",
+      dash_immediate: "Planification Immédiate", dash_planned: "Planifié",
+      dash_technicians: "Techniciens", dash_work_orders: "Ordres de Travail",
+      dash_reports: "Rapports", dash_special: "Tâche Spéciale",
+      dash_tech_status: "État Technique", dash_task_list: "Liste des Tâches",
+      dash_preventive: "Préventif", dash_calendar: "Calendrier",
+      dash_asset_register: "Registre des Assets", dash_reset: "Réinitialiser",
+      dash_selected_dept: "Département Sélectionné", dash_location: "Emplacement",
+      dash_view_requests: "Voir les Demandes", dash_new_request: "Nouvelle Demande",
+      dash_repair: "Réparation", dash_projects: "Projets & Améliorations",
+      plan_leakage: "Demandes de Fuites", plan_repairs: "Planification Réparations",
+      plan_pending: "Ingénieur en Attente", plan_approved: "Ingénieur Approuvé",
+      plan_technician: "Technicien", plan_duration: "Durée (min)",
+      plan_charge: "Responsable", plan_backup: "Suppléant",
+      plan_start: "Date de Début", plan_finish: "Date de Fin",
+      plan_search: "Rechercher:", plan_dispatch: "Envoyer Ingénieur",
+      task_new: "Nouvelle Tâche", task_asset_code: "Code Asset",
+      task_search: "Rechercher", task_asset_name: "Nom Asset",
+      task_type: "Type Asset", task_serial: "Série",
+      task_dept: "Département", task_location: "Emplacement",
+      task_urgency: "Urgence", task_description: "Description",
+      task_urgent: "Réparations Urgentes", task_needed: "Réparations Nécessaires",
+      task_improvements: "Améliorations & Projets",
+      task_new_btn: "+ Nouveau", task_confirm: "Confirmer", task_delete: "Supprimer",
+      task_list: "Liste des Tâches", task_planned: "Planifié",
+      task_deleted: "Supprimé", task_rework: "Retravail", task_unplanned: "Non Planifié",
+      approve_title: "Approbations en Attente",
+      approve_subtitle: "Examiner et approuver les demandes de maintenance",
+      approve_export: "Imprimer", approve_date: "Date Demandée",
+      approve_due: "Date d'Échéance", approve_status: "Statut", approve_action: "Action",
+      approve_yes: "Approuvé", approve_no: "Rejeté",
+      wa_presets: "Préréglages Scénarios",
+      wa_logs: "Journaux Système NITA", wa_clear: "Effacer", wa_placeholder: "Tapez un message...",
+      tech_queue: "Ma File d'Attente",
+      tech_desc: "Sélectionnez les ordres de travail.",
+      tech_work_order: "Ordre de Travail", tech_asset: "Asset",
+      tech_scheduled: "Programmé", tech_action: "Action",
+      api_title: "Testeur d'Endpoint API",
+      api_desc: "Sélectionnez un endpoint ci-dessus.",
+      api_send: "Envoyer", api_response: "Réponse JSON",
+      db_tables: "Tables", db_field: "Nom du Champ",
+      db_type: "Type de Donnée", db_key: "Clé",
+      db_desc: "Description", db_relations: "Relations",
+      doc_solution: "1. Conception Solution", doc_logic: "2. Logique Décisionnelle",
+      doc_model: "3. Modèle de Données", doc_impact: "4. Impact Business",
+      logout: "Déconnexion", host: "RT Knits (Île Maurice)", sla: "SLA: 99.8%",
+      server: "Base de Données", save: "Enregistrer"
+    },
+
+    cr: {
+      login_subtitle: "Laport Maintenance RT Knits",
+      sign_in: "Konekte", sign_up: "Enskri",
+      phone_label: "Numéro Téléfon", pin_label: "PIN",
+      phone_placeholder: "+230 5XXX XXXX", pin_placeholder: "Ékrir PIN",
+      create_account: "Fér Komt", full_name: "Lér Nοm",
+      role_label: "Zonn", department: "Départeman",
+      select_department: "Séléktyon én Départeman", trade: "Métier",
+      create_pin: "Fér PIN (4-6 chiffre)",
+      operator: "Operatér", technician: "Tésinisyen", coordinator: "Koordinator",
+      nav_dashboard: "Tablo Bòrd", nav_planning: "Planifikasion",
+      nav_tasks: "Ékri Tâch", nav_approvals: "Agréman",
+      nav_simulator: "Similatér WhatsApp", nav_my_tasks: "Mo Tâch",
+      nav_api: "Bak API", nav_data: "Modèl Données",
+      nav_docs: "Dokimanasion",
+      dash_title: "Tablo Bòrd Koordinator",
+      dash_departments: "Départeman", dash_approvals: "Agréman An Atandan",
+      dash_immediate: "Planifikasion Imedyat", dash_planned: "Planifié",
+      dash_technicians: "Tésinisyen", dash_work_orders: "Lòd Travay",
+      dash_reports: "Rapò", dash_special: "Tâch Spésyal",
+      dash_tech_status: "Eta Tech", dash_task_list: "Lis Tâch",
+      dash_preventive: "Préventif", dash_calendar: "Kalannrié",
+      dash_asset_register: "Rejistr Asè", dash_reset: "Résè Lòd",
+      dash_selected_dept: "Départeman Séléktyoné", dash_location: "Lokasion",
+      dash_view_requests: "Vwar Dimann", dash_new_request: "Nouvo Dimann",
+      dash_repair: "Réparasion", dash_projects: "Projè & Améliorasian",
+      plan_leakage: "Dimann Fuit", plan_repairs: "Planifikasion Réparasion",
+      plan_pending: "Injinyé An Atandan", plan_approved: "Injinyé Agré",
+      plan_technician: "Tésinisyen", plan_duration: "Duré (min)",
+      plan_charge: "Lé Réspansab", plan_backup: "Siplyan",
+      plan_start: "Dat Début", plan_finish: "Dat Fin",
+      plan_search: "Chérché:", plan_dispatch: "Anviyé Injinyé",
+      task_new: "Nouvo Tâch", task_asset_code: "Kòd Asè",
+      task_search: "Chérché", task_asset_name: "Lér Nοm Asè",
+      task_type: "Tip Asè", task_serial: "Séry",
+      task_dept: "Départeman", task_location: "Lokasion",
+      task_urgency: "Ijans", task_description: "Déskripsion",
+      task_urgent: "Réparasion Ijant", task_needed: "Réparasion Nésésèr",
+      task_improvements: "Améliorasian & Projè",
+      task_new_btn: "+ Nouvo", task_confirm: "Konfirmé", task_delete: "Efassé",
+      task_list: "Lis Tâch", task_planned: "Planifié",
+      task_deleted: "Efassé", task_rework: "Retravay", task_unplanned: "Pa Planifié",
+      approve_title: "Agréman An Atandan",
+      approve_subtitle: "Ékzaminé ék agrété dimann mantenans",
+      approve_export: "Imprime", approve_date: "Dat Dimann",
+      approve_due: "Dat Échéans", approve_status: "Sta", approve_action: "Lasion",
+      approve_yes: "Agré", approve_no: "Rejété",
+      wa_presets: "Préréglaz Senaryo",
+      wa_logs: "Jònal Sistèm NITA", wa_clear: "Efassé", wa_placeholder: "Ékrir én mesaz...",
+      tech_queue: "Mo Fil Atandan",
+      tech_desc: "Séléktyon lòd travay.",
+      tech_work_order: "Lòd Travay", tech_asset: "Asè",
+      tech_scheduled: "Programé", tech_action: "Lasion",
+      api_title: "Téstèr Endpoint API",
+      api_desc: "Séléktyon én endpoint ci-dessus.",
+      api_send: "Anviyé", api_response: "Répons JSON",
+      db_tables: "Tab", db_field: "Nοm Cham",
+      db_type: "Tip Données", db_key: "Lé",
+      db_desc: "Déskripsion", db_relations: "Relasion",
+      doc_solution: "1. Konsepsyon Solision", doc_logic: "2. Lozik Déskizyonèl",
+      doc_model: "3. Modèl Données", doc_impact: "4. Impak Biznis",
+      logout: "Dékonekte", host: "RT Knits (Moris)", sla: "SLA: 99.8%",
+      server: "Baz Données", save: "Anréisté"
+    },
+
+    hi: {
+      login_subtitle: "आरटी निट्स मेंटेनेंस पोर्टल",
+      sign_in: "साइन इन", sign_up: "साइन अप",
+      phone_label: "फ़ोन नंबर", pin_label: "पिन",
+      phone_placeholder: "+230 5XXX XXXX", pin_placeholder: "पिन दर्ज करें",
+      create_account: "खाता बनाएं", full_name: "पूरा नाम",
+      role_label: "भूमिका", department: "विभाग",
+      select_department: "विभाग चुनें", trade: "व्यवसाय",
+      create_pin: "पिन बनाएं (4-6 अंक)",
+      operator: "ऑपरेटर", technician: "तकनीशियन", coordinator: "समन्वयक",
+      nav_dashboard: "डैशबोर्ड", nav_planning: "योजना",
+      nav_tasks: "कार्य प्रविष्टि", nav_approvals: "अनुमोदन",
+      nav_simulator: "व्हाट्सएप सिम", nav_my_tasks: "मेरे कार्य",
+      nav_api: "एपीआई सैंडबॉक्स", nav_data: "डेटा मॉडल",
+      nav_docs: "दस्तावेज़ीकरण",
+      dash_title: "समन्वयक डैशबोर्ड",
+      dash_departments: "विभाग", dash_approvals: "लंबित अनुमोदन",
+      dash_immediate: "तुरंत योजना", dash_planned: "योजनाबद्ध",
+      dash_technicians: "तकनीशियन", dash_work_orders: "कार्य आदेश",
+      dash_reports: "रिपोर्ट", dash_special: "विशेष कार्य",
+      dash_tech_status: "तकनीक स्थिति", dash_task_list: "कार्य सूची",
+      dash_preventive: "निवारक", dash_calendar: "कैलेंडर",
+      dash_asset_register: "संपत्ति रजिस्टर", dash_reset: "आदेश रीसेट",
+      dash_selected_dept: "चयनित विभाग", dash_location: "स्थान",
+      dash_view_requests: "अनुरोध देखें", dash_new_request: "नया अनुरोध",
+      dash_repair: "मरम्मत", dash_projects: "प्रोजेक्ट और सुधार",
+      plan_leakage: "रिसाव अनुरोध", plan_repairs: "मरम्मत योजना",
+      plan_pending: "इंजीनियर लंबित", plan_approved: "इंजीनियर अनुमोदित",
+      plan_technician: "तकनीशियन", plan_duration: "अवधि (मिनट)",
+      plan_charge: "प्रभारी व्यक्ति", plan_backup: "बैकअप",
+      plan_start: "शुरू तिथि", plan_finish: "समाप्ति तिथि",
+      plan_search: "खोजें:", plan_dispatch: "इंजीनियर भेजें",
+      task_new: "नया कार्य", task_asset_code: "संपत्ति कोड",
+      task_search: "खोजें", task_asset_name: "संपत्ति का नाम",
+      task_type: "संपत्ति प्रकार", task_serial: "सीरियल",
+      task_dept: "विभाग", task_location: "स्थान",
+      task_urgency: "तात्कालिकता", task_description: "विवरण",
+      task_urgent: "अत्यावश्यक मरम्मत", task_needed: "आवश्यक मरम्मत",
+      task_improvements: "सुधार और प्रोजेक्ट",
+      task_new_btn: "+ नया", task_confirm: "पुष्टि करें", task_delete: "हटाएं",
+      task_list: "कार्य सूची", task_planned: "योजनाबद्ध",
+      task_deleted: "हटाया गया", task_rework: "पुनर्कार्य", task_unplanned: "अनियोजित",
+      approve_title: "लंबित अनुमोदन",
+      approve_subtitle: "रखरखाव अनुरोधों की समीक्षा करें",
+      approve_export: "प्रिंट", approve_date: "अनुरोध तिथि",
+      approve_due: "नियत तिथि", approve_status: "स्थिति", approve_action: "कार्रवाई",
+      approve_yes: "अनुमोदित", approve_no: "अस्वीकृत",
+      wa_presets: "परिदृश्य प्रीसेट",
+      wa_logs: "सिस्टम लॉग", wa_clear: "साफ़ करें", wa_placeholder: "संदेश टाइप करें...",
+      tech_queue: "मेरी कार्य पंक्ति",
+      tech_desc: "कार्य आदेश चुनें।",
+      tech_work_order: "कार्य आदेश", tech_asset: "संपत्ति",
+      tech_scheduled: "निर्धारित", tech_action: "कार्रवाई",
+      api_title: "एंडपॉइंट परीक्षक",
+      api_desc: "ऊपर से एंडपॉइंट चुनें।",
+      api_send: "भेजें", api_response: "प्रतिक्रिया",
+      db_tables: "तालिका", db_field: "फ़ील्ड नाम",
+      db_type: "डेटा प्रकार", db_key: "कुंजी",
+      db_desc: "विवरण", db_relations: "संबंध",
+      doc_solution: "1. समाधान डिज़ाइन", doc_logic: "2. निर्णय तर्क",
+      doc_model: "3. डेटा मॉडल", doc_impact: "4. व्यापार प्रभाव",
+      logout: "लॉग आउट", host: "आरटी निट्स (मॉरीशस)", sla: "एसएलए: 99.8%",
+      server: "डेटाबेस", save: "सहेजें"
+    }
   },
-  
-  fr: {
-    // Auth
-    login_subtitle: "Portail de Maintenance RT Knits",
-    sign_in: "Connexion",
-    sign_up: "Inscription",
-    phone_label: "Numéro de Téléphone",
-    pin_label: "PIN",
-    phone_placeholder: "+230 5XXX XXXX",
-    pin_placeholder: "Entrez le PIN",
-    create_account: "Créer un Compte",
-    full_name: "Nom Complet",
-    role: "Rôle",
-    department: "Département",
-    select_department: "Sélectionner un Département",
-    trade: "Métier",
-    create_pin: "Créer un PIN (4-6 chiffres)",
-    operator: "Opérateur",
-    technician: "Technicien",
-    coordinator: "Coordinateur",
-    
-    // Sidebar
-    dashboard: "Tableau de Bord",
-    planning: "Planification",
-    task_entry: "Saisie de Tâche",
-    approvals: "Approbations",
-    whatsapp_sim: "Simulateur WhatsApp",
-    my_tasks: "Mes Tâches",
-    api_sandbox: "Bac à Sable API",
-    data_model: "Modèle de Données",
-    documentation: "Documentation",
-    mauritius: "RT Knits — Île Maurice",
-    sla_target: "Objectif SLA: 99.8%",
-    
-    // Dashboard
-    coordinator_dashboard: "Tableau de Bord Coordinateur",
-    departments: "Départements",
-    approvals_count: "Approbations",
-    planning_btn: "Planification",
-    immediate: "Immédiat",
-    planned: "Planifié",
-    technicians: "Techniciens",
-    work_orders: "Ordres de Travail",
-    special_task: "Tâche Spéciale",
-    reports: "Rapports",
-    edit_planned: "Modifier Planifié",
-    tech_status: "État Tech",
-    task_list: "Liste des Tâches",
-    preventive: "Préventif",
-    tech_reports: "Rapports Tech",
-    tech_dashboard: "Dashboard Tech",
-    calendar: "Calendrier",
-    reset_orders: "Réinitialiser Ordres",
-    asset_labels: "Étiquettes Assets",
-    asset_register: "Registre Assets",
-    multi_user: "Vue Multi-Utilisateur",
-    order_reports: "Rapports Ordres",
-    selected_department: "Département Sélectionné",
-    location: "Emplacement",
-    view_requests: "Voir les Demandes",
-    new_request: "Nouvelle Demande",
-    repair: "Réparation",
-    projects: "Projets",
-    
-    // Planning
-    leakage: "Fuites",
-    repairs: "Réparations",
-    pending: "En Attente",
-    approved: "Approuvé",
-    technician_label: "Technicien",
-    duration: "Durée (min)",
-    person_in_charge: "Responsable",
-    backup: "Suppléant",
-    start_date: "Date de Début",
-    finish_date: "Date de Fin",
-    asset_filter: "Filtre Asset:",
-    search: "Rechercher:",
-    dispatch_engineer: "Envoyer Ingénieur",
-    
-    // Task Entry
-    new_task: "Nouvelle Tâche — Réparation",
-    asset_code: "Code Asset",
-    search_btn: "Rechercher",
-    asset_name: "Nom Asset",
-    asset_type: "Type Asset",
-    serial: "Série",
-    location_detail: "Détail Emplacement",
-    urgency: "Urgence",
-    urgent_repairs: "Réparations Urgentes",
-    needed_repairs: "Réparations Nécessaires",
-    improvements: "Améliorations & Projets",
-    description: "Description",
-    new_btn: "+ Nouveau",
-    confirm: "Confirmer",
-    delete: "Supprimer",
-    task_list_title: "Liste des Tâches",
-    planned: "Planifié",
-    deleted: "Supprimé",
-    rework: "Retravail",
-    unplanned: "Non Planifié",
-    
-    // Approvals
-    pending_approvals: "Approbations en Attente",
-    review_subtitle: "Examiner et approuver les demandes de maintenance",
-    export: "Exporter",
-    date_requested: "Date Demandée",
-    due_date: "Date d'Échéance",
-    status: "Statut",
-    action: "Action",
-    
-    // WhatsApp
-    scenario_presets: "Préréglages Scénarios",
-    clear: "Effacer",
-    system_logs: "Journaux Système",
-    type_message: "Tapez un message...",
-    
-    // Technician
-    my_job_queue: "Ma File d'Attente",
-    select_work_orders: "Sélectionnez les ordres de travail pour mettre à jour votre progression.",
-    work_order: "Ordre de Travail",
-    scheduled: "Programmé",
-    
-    // API
-    endpoint_details: "Détails de l'Endpoint",
-    select_endpoint: "Sélectionnez un endpoint dans le menu déroulant ci-dessus.",
-    send: "Envoyer",
-    response: "Réponse",
-    
-    // Database
-    tables: "Tables",
-    field_name: "Nom du Champ",
-    data_type: "Type de Donnée",
-    key: "Clé",
-    relationships: "Relations",
-    
-    // Docs
-    solution_design: "1. Conception Solution",
-    decision_logic: "2. Logique Décisionnelle",
-    data_model_doc: "3. Modèle de Données",
-    business_impact: "4. Impact Business"
+
+  t: function(key) {
+    var lang = this.translations[this.currentLang];
+    return (lang && lang[key]) || (this.translations.en && this.translations.en[key]) || key;
   },
-  
-  cr: {
-    // Auth (Kreol Morisien)
-    login_subtitle: "Laport Maintenance RT Knits",
-    sign_in: "Konekte",
-    sign_up: "Enskri",
-    phone_label: "Numéro Téléfon",
-    pin_label: "PIN",
-    phone_placeholder: "+230 5XXX XXXX",
-    pin_placeholder: "Ékrir PIN",
-    create_account: "Fér Komt",
-    full_name: "Lér Nοm",
-    role: "Zonn",
-    department: "Départeman",
-    select_department: "Séléktyon én Départeman",
-    trade: "Métier",
-    create_pin: "Fér PIN (4-6 chiffre)",
-    operator: "Operatér",
-    technician: "Tésinisyen",
-    coordinator: "Koordinator",
-    
-    // Sidebar
-    dashboard: "Tablo Bòrd",
-    planning: "Planifikasion",
-    task_entry: "Ékri Tâch",
-    approvals: "Agréman",
-    whatsapp_sim: "Similatér WhatsApp",
-    my_tasks: "Mo Tâch",
-    api_sandbox: "Bak API",
-    data_model: "Modèl Données",
-    documentation: "Dokimanasion",
-    mauritius: "RT Knits — Moris",
-    sla_target: "Tirget SLA: 99.8%",
-    
-    // Dashboard
-    coordinator_dashboard: "Tablo Bòrd Koordinator",
-    departments: "Départeman",
-    approvals_count: "Agréman",
-    planning_btn: "Planifikasion",
-    immediate: "Imedyat",
-    planned: "Planifié",
-    technicians: "Tésinisyen",
-    work_orders: "Lòd Travay",
-    special_task: "Tâch Spésyal",
-    reports: "Rapò",
-    edit_planned: "Mofifié Planifié",
-    tech_status: "Eta Tech",
-    task_list: "Lis Tâch",
-    preventive: "Préventif",
-    tech_reports: "Rapò Tech",
-    tech_dashboard: "Tablo Bòrd Tech",
-    calendar: "Kalannrié",
-    reset_orders: "Résè Lòd",
-    asset_labels: "Étikèt Asè",
-    asset_register: "Rejistr Asè",
-    multi_user: "Vwaz Multi-Utilsatèr",
-    order_reports: "Rapò Lòd",
-    selected_department: "Départeman Séléktyoné",
-    location: "Lokasion",
-    view_requests: "Vwar Dimann",
-    new_request: "Nouvo Dimann",
-    repair: "Réparasion",
-    projects: "Projè",
-    
-    // Planning
-    leakage: "Fuit",
-    repairs: "Réparasion",
-    pending: "An Atandan",
-    approved: "Agré",
-    technician_label: "Tésinisyen",
-    duration: "Duré (min)",
-    person_in_charge: "Lé Réspansab",
-    backup: "Siplyan",
-    start_date: "Dat Début",
-    finish_date: "Dat Fin",
-    asset_filter: "Filt Asè:",
-    search: "Chérché:",
-    dispatch_engineer: "Anviyé Injinyé",
-    
-    // Task Entry
-    new_task: "Nouvo Tâch — Réparasion",
-    asset_code: "Kòd Asè",
-    search_btn: "Chérché",
-    asset_name: "Lér Nοm Asè",
-    asset_type: "Tip Asè",
-    serial: "Séry",
-    location_detail: "Détaíl Lokasion",
-    urgency: "Ijans",
-    urgent_repairs: "Réparasion Ijant",
-    needed_repairs: "Réparasion Nésésèr",
-    improvements: "Améliorasian & Projè",
-    description: "Déskripsion",
-    new_btn: "+ Nouvo",
-    confirm: "Konfirmé",
-    delete: "Efassé",
-    task_list_title: "Lis Tâch",
-    planned: "Planifié",
-    deleted: "Efassé",
-    rework: "Retravay",
-    unplanned: "Pa Planifié",
-    
-    // Approvals
-    pending_approvals: "Agréman An Atandan",
-    review_subtitle: "Ékzaminé ék agrété dimann mantenans",
-    export: "Ékspòté",
-    date_requested: "Dat Dimann",
-    due_date: "Dat Échéans",
-    status: "Sta",
-    action: "Lasion",
-    
-    // WhatsApp
-    scenario_presets: "Préréglaz Senaryo",
-    clear: "Efassé",
-    system_logs: "Jònal Sistèm",
-    type_message: "Ékrir én mesaz...",
-    
-    // Technician
-    my_job_queue: "Mo Fil Atandan",
-    select_work_orders: "Séléktyon lòd travay pou met an jou prògrè wa.",
-    work_order: "Lòd Travay",
-    scheduled: "Programé",
-    
-    // API
-    endpoint_details: "Détaíl Endpoint",
-    select_endpoint: "Séléktyon én endpoint dan sélas déroulan anlé.",
-    send: "Anviyé",
-    response: "Répons",
-    
-    // Database
-    tables: "Tab",
-    field_name: "Nοm Cham",
-    data_type: "Tip Données",
-    key: "Lé",
-    relationships: "Relasion",
-    
-    // Docs
-    solution_design: "1. Konsepsyon Solision",
-    decision_logic: "2. Lozik Déskizyonèl",
-    data_model_doc: "3. Modèl Données",
-    business_impact: "4. Impak Biznis"
+
+  setLang: function(lang) {
+    if (this.translations[lang]) {
+      this.currentLang = lang;
+      localStorage.setItem('nita_lang', lang);
+      this.apply();
+    }
   },
-  
-  hi: {
-    // Auth (Hindi)
-    login_subtitle: "आरटी निट्स मेंटेनेंस पोर्टल",
-    sign_in: "साइन इन",
-    sign_up: "साइन अप",
-    phone_label: "फ़ोन नंबर",
-    pin_label: "पिन",
-    phone_placeholder: "+230 5XXX XXXX",
-    pin_placeholder: "पिन दर्ज करें",
-    create_account: "खाता बनाएं",
-    full_name: "पूरा नाम",
-    role: "भूमिका",
-    department: "विभाग",
-    select_department: "विभाग चुनें",
-    trade: "व्यवसाय",
-    create_pin: "पिन बनाएं (4-6 अंक)",
-    operator: "ऑपरेटर",
-    technician: "तकनीशियन",
-    coordinator: "समन्वयक",
-    
-    // Sidebar
-    dashboard: "डैशबोर्ड",
-    planning: "योजना",
-    task_entry: "कार्य प्रविष्टि",
-    approvals: "अनुमोदन",
-    whatsapp_sim: "व्हाट्सएप सिम",
-    my_tasks: "मेरे कार्य",
-    api_sandbox: "एपीआई सैंडबॉक्स",
-    data_model: "डेटा मॉडल",
-    documentation: "दस्तावेज़ीकरण",
-    mauritius: "आरटी निट्स — मॉरीशस",
-    sla_target: "एसएलए लक्ष्य: 99.8%",
-    
-    // Dashboard
-    coordinator_dashboard: "समन्वयक डैशबोर्ड",
-    departments: "विभाग",
-    approvals_count: "अनुमोदन",
-    planning_btn: "योजना",
-    immediate: "तुरंत",
-    planned: "योजनाबद्ध",
-    technicians: "तकनीशियन",
-    work_orders: "कार्य आदेश",
-    special_task: "विशेष कार्य",
-    reports: "रिपोर्ट",
-    edit_planned: "योजनाबद्ध संपादित करें",
-    tech_status: "तकनीक स्थिति",
-    task_list: "कार्य सूची",
-    preventive: "निवारक",
-    tech_reports: "तकनीक रिपोर्ट",
-    tech_dashboard: "तकनीक डैशबोर्ड",
-    calendar: "कैलेंडर",
-    reset_orders: "आदेश रीसेट करें",
-    asset_labels: "संपत्ति लेबल",
-    asset_register: "संपत्ति रजिस्टर",
-    multi_user: "मल्टी-यूज़र व्यू",
-    order_reports: "आदेश रिपोर्ट",
-    selected_department: "चयनित विभाग",
-    location: "स्थान",
-    view_requests: "अनुरोध देखें",
-    new_request: "नया अनुरोध",
-    repair: "मरम्मत",
-    projects: "प्रोजेक्ट",
-    
-    // Planning
-    leakage: "रिसाव",
-    repairs: "मरम्मत",
-    pending: "लंबित",
-    approved: "अनुमोदित",
-    technician_label: "तकनीशियन",
-    duration: "अवधि (मिनट)",
-    person_in_charge: "प्रभारी व्यक्ति",
-    backup: "बैकअप",
-    start_date: "शुरू तिथि",
-    finish_date: "समाप्ति तिथि",
-    asset_filter: "संपत्ति फ़िल्टर:",
-    search: "खोजें:",
-    dispatch_engineer: "इंजीनियर भेजें",
-    
-    // Task Entry
-    new_task: "नया कार्य — मरम्मत",
-    asset_code: "संपत्ति कोड",
-    search_btn: "खोजें",
-    asset_name: "संपत्ति का नाम",
-    asset_type: "संपत्ति प्रकार",
-    serial: "सीरियल",
-    location_detail: "स्थान विवरण",
-    urgency: "तात्कालिकता",
-    urgent_repairs: "अत्यावश्यक मरम्मत",
-    needed_repairs: "आवश्यक मरम्मत",
-    improvements: "सुधार और प्रोजेक्ट",
-    description: "विवरण",
-    new_btn: "+ नया",
-    confirm: "पुष्टि करें",
-    delete: "हटाएं",
-    task_list_title: "कार्य सूची",
-    planned: "योजनाबद्ध",
-    deleted: "हटाया गया",
-    rework: "पुनर्कार्य",
-    unplanned: "अनियोजित",
-    
-    // Approvals
-    pending_approvals: "लंबित अनुमोदन",
-    review_subtitle: "रखरखाव अनुरोधों की समीक्षा और अनुमोदन करें",
-    export: "निर्यात",
-    date_requested: "अनुरोध तिथि",
-    due_date: "नियत तिथि",
-    status: "स्थिति",
-    action: "कार्रवाई",
-    
-    // WhatsApp
-    scenario_presets: "परिदृश्य प्रीसेट",
-    clear: "साफ़ करें",
-    system_logs: "सिस्टम लॉग",
-    type_message: "संदेश टाइप करें...",
-    
-    // Technician
-    my_job_queue: "मेरी कार्य पंक्ति",
-    select_work_orders: "अपनी प्रगति अपडेट करने के लिए कार्य आदेश चुनें।",
-    work_order: "कार्य आदेश",
-    scheduled: "निर्धारित",
-    
-    // API
-    endpoint_details: "एंडपॉइंट विवरण",
-    select_endpoint: "ऊपर ड्रॉपडाउन से एंडपॉइंट चुनें।",
-    send: "भेजें",
-    response: "प्रतिक्रिया",
-    
-    // Database
-    tables: "तालिका",
-    field_name: "फ़ील्ड नाम",
-    data_type: "डेटा प्रकार",
-    key: "कुंजी",
-    relationships: "संबंध",
-    
-    // Docs
-    solution_design: "1. समाधान डिज़ाइन",
-    decision_logic: "2. निर्णय तर्क",
-    data_model_doc: "3. डेटा मॉडल",
-    business_impact: "4. व्यापार प्रभाव"
+
+  apply: function() {
+    var self = this;
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (key) el.textContent = self.t(key);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-ph');
+      if (key) el.placeholder = self.t(key);
+    });
+    document.querySelectorAll('.lang-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === self.currentLang);
+    });
+  },
+
+  init: function() {
+    var self = this;
+    document.querySelectorAll('.lang-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self.setLang(btn.getAttribute('data-lang'));
+      });
+    });
+    this.apply();
   }
 };
-
-// Current language
-let currentLang = localStorage.getItem('nita_lang') || 'en';
-
-// Translation function
-function t(key) {
-  return translations[currentLang]?.[key] || translations.en[key] || key;
-}
-
-// Apply translations to all elements with data-i18n attribute
-function applyTranslations() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    el.textContent = t(key);
-  });
-  
-  // Update placeholders
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    el.placeholder = t(key);
-  });
-  
-  // Update language switcher active state
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === currentLang);
-  });
-}
-
-// Switch language
-function switchLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem('nita_lang', lang);
-  applyTranslations();
-}
-
-// Initialize language switcher
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchLanguage(btn.dataset.lang));
-  });
-  applyTranslations();
-});
