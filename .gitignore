@@ -31,5 +31,8 @@ package-lock.json
 public/dist/
 dist/
 
+# Unused TypeScript sources
+src/ts/
+
 # Data files (runtime-generated)
 data/
