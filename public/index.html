@@ -269,10 +269,11 @@
           <div class="card-header-row">
             <div class="card-header" data-i18n="task_list">Task List</div>
             <div class="legend">
-              <span class="legend-item"><span class="legend-dot dot-green"></span><span data-i18n="task_planned">Planned</span></span>
-              <span class="legend-item"><span class="legend-dot dot-red"></span><span data-i18n="task_deleted">Deleted</span></span>
-              <span class="legend-item"><span class="legend-dot dot-yellow"></span><span data-i18n="task_rework">Rework</span></span>
-              <span class="legend-item"><span class="legend-dot dot-blue"></span><span data-i18n="task_unplanned">Unplanned</span></span>
+              <span class="legend-item" onclick="filterTasks('planned')" style="cursor:pointer" title="Filter Planned"><span class="legend-dot dot-green"></span><span data-i18n="task_planned">Planned</span></span>
+              <span class="legend-item" onclick="filterTasks('deleted')" style="cursor:pointer" title="Filter Deleted"><span class="legend-dot dot-red"></span><span data-i18n="task_deleted">Deleted</span></span>
+              <span class="legend-item" onclick="filterTasks('rework')" style="cursor:pointer" title="Filter Rework"><span class="legend-dot dot-yellow"></span><span data-i18n="task_rework">Rework</span></span>
+              <span class="legend-item" onclick="filterTasks('unplanned')" style="cursor:pointer" title="Filter Unplanned"><span class="legend-dot dot-blue"></span><span data-i18n="task_unplanned">Unplanned</span></span>
+              <span class="legend-item" onclick="filterTasks('all')" style="cursor:pointer;font-weight:700;margin-left:4px" title="Show All Tasks"><span>All</span></span>
             </div>
           </div>
           <div class="card-body scroll-y">
@@ -293,7 +294,8 @@
             <div class="card-header-lg" data-i18n="approve_title">Pending Approvals</div>
             <div class="card-sub" data-i18n="approve_subtitle">Review and approve maintenance requests</div>
           </div>
-          <div class="header-right">
+          <div class="header-right" style="display:flex;align-items:center;gap:12px">
+            <input type="text" id="approve-search" class="field-input field-sm" placeholder="Search approvals..." oninput="renderApprovals()" style="max-width:180px">
             <span class="count-badge" id="approve-count-badge">0</span>
             <button class="btn-outline" onclick="window.print()" data-i18n="approve_export">Print Out</button>
           </div>
