@@ -195,10 +195,11 @@ struct SignupRequest {
 
 #[post("/api/auth/signup")]
 async fn secure_signup(
+    http_req: HttpRequest,
     req: web::Json<SignupRequest>,
     rate_limit: web::Data<Mutex<RateLimiter>>,
 ) -> impl Responder {
-    let client_ip = extract_client_ip(&req);
+    let client_ip = extract_client_ip_from_req(&http_req);
 
     // Rate limit: 3 signups per 5 minutes
     {
@@ -297,10 +298,11 @@ async fn secure_signup(
 
 #[post("/api/auth/login")]
 async fn secure_login(
+    http_req: HttpRequest,
     req: web::Json<LoginRequest>,
     rate_limit: web::Data<Mutex<RateLimiter>>,
 ) -> impl Responder {
-    let client_ip = extract_client_ip(&req);
+    let client_ip = extract_client_ip_from_req(&http_req);
 
     // Rate limit: 5 attempts per minute
     {
@@ -436,6 +438,14 @@ fn validate_jwt(req: &HttpRequest) -> Result<Claims, String> {
     Err("Authorization header missing.".to_string())
 }
 
+fn require_role(req: &HttpRequest, allowed_roles: &[&str]) -> Result<Claims, String> {
+    let claims = validate_jwt(req)?;
+    if !allowed_roles.contains(&claims.role.as_str()) {
+        return Err(format!("Insufficient permissions. Required roles: {:?}", allowed_roles));
+    }
+    Ok(claims)
+}
+
 // ============================================================
 // PROTECTED ENDPOINTS
 // ============================================================
@@ -474,9 +484,30 @@ async fn health_check() -> impl Responder {
 // HELPER FUNCTIONS
 // ============================================================
 
+fn extract_client_ip_from_req(req: &HttpRequest) -> String {
+    // Extract real client IP from X-Forwarded-For header (Vercel/proxy)
+    if let Some(forwarded) = req.headers().get("X-Forwarded-For") {
+        if let Ok(val) = forwarded.to_str() {
+            if let Some(first_ip) = val.split(',').next() {
+                return first_ip.trim().to_string();
+            }
+        }
+    }
+    // Fallback to X-Real-IP
+    if let Some(real_ip) = req.headers().get("X-Real-IP") {
+        if let Ok(val) = real_ip.to_str() {
+            return val.trim().to_string();
+        }
+    }
+    // Fallback to connection peer addr
+    req.peer_addr()
+        .map(|addr| addr.ip().to_string())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
 fn extract_client_ip<T>(_req: &web::Json<T>) -> String {
-    // In production, extract from X-Forwarded-For header
-    "127.0.0.1".to_string()
+    // Fallback for JSON-only endpoints without request access
+    "unknown".to_string()
 }
 
 // ============================================================

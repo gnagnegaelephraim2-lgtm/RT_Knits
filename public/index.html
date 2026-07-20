@@ -43,6 +43,7 @@
         <option value="operator" data-i18n="operator">Operator</option>
         <option value="technician" data-i18n="technician">Technician</option>
         <option value="coordinator" data-i18n="coordinator">Coordinator</option>
+        <option value="admin">Admin</option>
       </select>
       <div id="signup-trade-field" style="display:none">
         <label class="field-label" data-i18n="trade">Trade</label>
@@ -100,6 +101,10 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span data-i18n="nav_simulator">WhatsApp Sim</span>
     </a>
+    <a class="nav-item" data-target="pane-conversations" id="menu-conversations" style="display:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="12" cy="10" r="1" fill="currentColor"/><circle cx="17" cy="10" r="1" fill="currentColor"/><circle cx="7" cy="10" r="1" fill="currentColor"/></svg>
+      <span data-i18n="nav_conversations">Conversations</span>
+    </a>
     <a class="nav-item" data-target="pane-technician-tasks" id="menu-technician-tasks" style="display:none">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
       <span data-i18n="nav_my_tasks">My Tasks</span>
@@ -146,6 +151,10 @@
       </div>
     </div>
     <div class="topbar-right">
+      <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
+        <svg class="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
       <div class="lang-switcher">
         <button class="lang-btn active" data-lang="en">EN</button>
         <button class="lang-btn" data-lang="fr">FR</button>
@@ -157,44 +166,98 @@
 
   <div class="content-scroll">
 
-    <!-- PANE: Dashboard -->
+    <!-- PANE: Admin Dashboard -->
     <section id="pane-dashboard" class="content-pane active">
-      <div class="dash-grid">
-        <div class="card card-dept-list">
-          <div class="card-header" data-i18n="dash_departments">Departments</div>
-          <div class="card-body scroll-y">
-            <table class="data-table compact" id="fm-dept-dashboard-table"></table>
+      <!-- Top Stats Row -->
+      <div id="admin-stats-top" class="admin-stats-top"></div>
+
+      <div class="admin-dash-grid">
+        <!-- Left Column: Departments + Activity -->
+        <div class="admin-dash-left">
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-header" style="margin:0;border:none;padding:0" data-i18n="dash_departments">Departments</div>
+              <span class="count-badge" id="dept-count-badge">0</span>
+            </div>
+            <div class="card-body scroll-y" style="max-height:320px">
+              <table class="data-table compact" id="fm-dept-dashboard-table"></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-header" style="margin:0;border:none;padding:0">Recent Activity</div>
+              <button class="btn-small" onclick="navigateTo('pane-conversations')">View All</button>
+            </div>
+            <div class="card-body scroll-y" style="max-height:260px">
+              <div id="admin-activity-feed"></div>
+            </div>
           </div>
         </div>
-        <div class="card card-actions">
-          <div id="stats-grid" class="stats-grid"></div>
-          <div class="action-grid">
-            <button class="action-btn accent" onclick="navigateTo('pane-tasks-to-approve')"><span data-i18n="dash_approvals">Pending Approvals</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="nav_planning">Planning</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="dash_immediate">Immediate Planning</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="dash_planned">Planned</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="dash_technicians">Technicians</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="dash_work_orders">Work Orders</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-docs')"><span data-i18n="dash_reports">Reports</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-planning-breakdown')"><span data-i18n="dash_tech_status">Tech Status</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-task-entry')"><span data-i18n="dash_task_list">Task List</span></button>
-            <button class="action-btn" onclick="navigateTo('pane-task-entry')"><span data-i18n="dash_preventive">Preventive</span></button>
-            <button class="action-btn warning" onclick="navigateTo('pane-api')"><span data-i18n="dash_asset_register">Asset Register</span></button>
-            <button class="action-btn danger" onclick="resetAllWorkOrders()"><span data-i18n="dash_reset">Reset Orders</span></button>
-          </div>
-          <div class="dept-detail-row">
-            <div class="dept-detail-card">
-              <div class="card-header-sm" data-i18n="dash_selected_dept">Selected Department</div>
-              <div class="dept-name" id="fm-detail-dept-name">—</div>
-              <div class="card-header-sm" data-i18n="dash_location">Location</div>
-              <div class="dept-loc" id="fm-detail-dept-loc">—</div>
+
+        <!-- Center Column: Quick Actions + Department Detail -->
+        <div class="admin-dash-center">
+          <div class="card">
+            <div class="card-header" data-i18n="dash_new_request">New Request</div>
+            <div class="admin-quick-actions">
+              <button class="admin-action-card accent" onclick="navigateTo('pane-tasks-to-approve')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span data-i18n="dash_approvals">Pending Approvals</span>
+                <span class="admin-action-badge" id="admin-approval-badge">0</span>
+              </button>
+              <button class="admin-action-card" onclick="navigateTo('pane-planning-breakdown')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                <span data-i18n="nav_planning">Planning</span>
+              </button>
+              <button class="admin-action-card" onclick="navigateTo('pane-task-entry')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span data-i18n="dash_task_list">Task List</span>
+              </button>
+              <button class="admin-action-card" onclick="navigateTo('pane-conversations')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span data-i18n="nav_conversations">Conversations</span>
+              </button>
+              <button class="admin-action-card" onclick="navigateTo('pane-technician-tasks')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                <span data-i18n="dash_work_orders">Work Orders</span>
+              </button>
+              <button class="admin-action-card" onclick="navigateTo('pane-api')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span data-i18n="nav_api">API Sandbox</span>
+              </button>
             </div>
-            <div class="dept-detail-card dept-detail-wide">
-              <div class="card-header-sm" data-i18n="dash_new_request">New Request</div>
-              <div class="dept-detail-row-btns">
-                <button class="action-btn accent" onclick="navigateTo('pane-task-entry')"><span data-i18n="dash_repair">Repair</span></button>
-                <button class="action-btn accent" onclick="navigateTo('pane-task-entry')"><span data-i18n="dash_projects">Projects</span></button>
+          </div>
+
+          <!-- Department Detail -->
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-header" style="margin:0;border:none;padding:0" data-i18n="dash_selected_dept">Selected Department</div>
+              <button class="btn-primary" onclick="navigateTo('pane-task-entry')" style="font-size:11px;padding:6px 12px">+ New Request</button>
+            </div>
+            <div class="admin-dept-detail">
+              <div class="admin-dept-info">
+                <div class="admin-dept-name" id="fm-detail-dept-name">—</div>
+                <div class="admin-dept-loc" id="fm-detail-dept-loc">—</div>
               </div>
+              <div class="admin-dept-stats" id="admin-dept-stats"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Technician Performance + Priority Breakdown -->
+        <div class="admin-dash-right">
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-header" style="margin:0;border:none;padding:0">Technician Performance</div>
+              <button class="btn-small" onclick="navigateTo('pane-planning-breakdown')">View All</button>
+            </div>
+            <div class="card-body scroll-y" style="max-height:320px">
+              <div id="admin-tech-performance"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" data-i18n="dash_priority_breakdown">Priority Breakdown</div>
+            <div class="card-body">
+              <div id="admin-priority-chart"></div>
             </div>
           </div>
         </div>
@@ -341,6 +404,51 @@
               <button class="btn-small" onclick="clearConsole()" data-i18n="wa_clear">Clear</button>
             </div>
             <div class="console-body" id="console-logs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE: Admin Conversations Viewer -->
+    <section id="pane-conversations" class="content-pane">
+      <div class="conv-grid">
+        <div class="conv-sidebar">
+          <div class="card">
+            <div class="card-header-row" style="padding:14px 16px 10px">
+              <div class="card-header" style="margin:0" data-i18n="conv_title">Conversations</div>
+              <span class="count-badge" id="conv-count-badge">0</span>
+            </div>
+            <div style="padding:0 16px 10px">
+              <input type="text" class="field-input field-sm" id="conv-search" placeholder="Search conversations..." data-i18n-ph="conv_search" oninput="filterConversationList()" style="width:100%">
+            </div>
+            <div style="padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn-small conv-filter active" onclick="setConvFilter(this,'all')" data-i18n="conv_filter_all">All</button>
+              <button class="btn-small conv-filter" onclick="setConvFilter(this,'operator')" data-i18n="conv_filter_operators">Operators</button>
+              <button class="btn-small conv-filter" onclick="setConvFilter(this,'technician')" data-i18n="conv_filter_technicians">Technicians</button>
+              <button class="btn-small conv-filter" onclick="setConvFilter(this,'coordinator')" data-i18n="conv_filter_coordinators">Coordinators</button>
+              <button class="btn-small conv-filter" onclick="setConvFilter(this,'work_orders')">Work Orders</button>
+            </div>
+            <div class="conv-list" id="conv-list">
+              <div class="conv-empty" data-i18n="conv_no_messages">Select a conversation to view messages</div>
+            </div>
+          </div>
+        </div>
+        <div class="conv-thread-panel">
+          <div class="card" style="height:100%;display:flex;flex-direction:column">
+            <div class="conv-thread-header" id="conv-thread-header">
+              <div class="conv-thread-avatar" id="conv-thread-avatar">—</div>
+              <div>
+                <div class="conv-thread-name" id="conv-thread-name" data-i18n="conv_select_thread">Select a conversation</div>
+                <div class="conv-thread-sub" id="conv-thread-sub">Choose from the list on the left</div>
+              </div>
+            </div>
+            <div class="conv-thread-body" id="conv-thread-body">
+              <div class="conv-empty" style="padding:60px 20px;text-align:center">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" style="margin:0 auto 16px;display:block"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div style="color:var(--text-3);font-size:14px" data-i18n="conv_empty_thread">Select a conversation from the list to view messages</div>
+              </div>
+            </div>
+            <div class="conv-thread-stats" id="conv-thread-stats"></div>
           </div>
         </div>
       </div>

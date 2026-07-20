@@ -35,7 +35,7 @@ CREATE TABLE app_user (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     department_id UUID REFERENCES department(department_id) ON DELETE SET NULL,
     full_name TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('operator', 'technician', 'coordinator')),
+    role TEXT NOT NULL CHECK (role IN ('operator', 'technician', 'coordinator', 'admin')),
     phone_number TEXT UNIQUE NOT NULL,
     pin_hash TEXT, -- Storing SHA-256 password hash securely
     created_at TIMESTAMPTZ DEFAULT now()
