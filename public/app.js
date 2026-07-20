@@ -185,6 +185,13 @@ async function loadAll(){
     if(r[3].status==='fulfilled' && r[3].value && r[3].value.length) taskRequests=r[3].value; else seedDefaultTaskRequests();
     if(r[4].status==='fulfilled' && r[4].value && r[4].value.length) workOrders=r[4].value; else seedDefaultWorkOrders();
     if(r[5].status==='fulfilled' && r[5].value) feedbacks=r[5].value||[];
+    // Build user cache from app_user table
+    if(r[6].status==='fulfilled' && r[6].value){
+      r[6].value.forEach(function(u){
+        allUsers[u.user_id]=u;
+        allUsers[u.phone_number]=u;
+      });
+    }
     if(r[7].status==='fulfilled' && r[7].value) messageLogs=r[7].value||[];
     if(r[8].status==='fulfilled' && r[8].value) conversationStates=r[8].value||[];
   }catch(e){
@@ -233,8 +240,20 @@ function getConversationGroups(){
   messageLogs.forEach(function(msg){
     var phone=msg.phone_number;
     if(!phone)return;
-    if(!groups[phone]) groups[phone]={phone:phone,messages:[],role:getRoleForPhone(phone),name:getNameForPhone(phone)};
-    groups[phone].messages.push(msg);
+    // Normalize message fields for real Supabase schema
+    var normalizedMsg={
+      phone_number:msg.phone_number,
+      message_direction:msg.direction||msg.message_direction||'inbound',
+      message_type:msg.message_type||'text',
+      message_content:msg.content||msg.message_content||'',
+      translated_content:msg.translated_content||null,
+      meta_data:msg.metadata||msg.meta_data||null,
+      created_at:msg.created_at||msg.timestamp||'',
+      user_id:msg.user_id||null,
+      user_name:msg.user_name||null
+    };
+    if(!groups[phone]) groups[phone]={phone:phone,messages:[],role:getRoleForPhone(phone),name:msg.user_name||getNameForPhone(phone)};
+    groups[phone].messages.push(normalizedMsg);
   });
   simChatHistory.forEach(function(msg){
     var phone=msg.phone_number||'sim-'+(session?session.userId:'local');
@@ -258,7 +277,7 @@ function getConversationGroups(){
       phone_number:phone,
       message_direction:'outbound',
       message_type:'text',
-      message_content:'Work Order dispatched: '+esc(a.name||'Asset')+' — Priority: '+(wo.priority==='critical'?'P0 CRITICAL':wo.priority==='high'?'P1 URGENT':'P2 NORMAL')+'. '+esc(tr.description||''),
+      message_content:'Work Order dispatched: '+esc(a.name||'Asset')+' — Priority: '+getPriorityShort(wo.priority||tr.priority)+'. '+esc(tr.description||''),
       created_at:wo.created_at||wo.scheduled_start||new Date().toISOString(),
       source:'work_order',
       work_order_id:wo.work_order_id
@@ -294,7 +313,8 @@ function getConversationGroups(){
     var creatorPhone=tk.created_by_user_id;
     if(!creatorPhone)return;
     var role=tk.created_by_role||'operator';
-    if(!groups[creatorPhone]) groups[creatorPhone]={phone:creatorPhone,messages:[],role:role,name:getNameForPhone(creatorPhone)};
+    var creatorName=getFullNameForUserId(creatorPhone);
+    if(!groups[creatorPhone]) groups[creatorPhone]={phone:creatorPhone,messages:[],role:role,name:creatorName};
     var a=assetIdMap[tk.asset_id]||{};
     var statusText=tk.status==='pending'?'Request submitted':tk.status==='approved'?'Request approved':tk.status==='completed'?'Task completed':tk.status==='rejected'?'Request rejected':'Status updated';
     groups[creatorPhone].messages.push({
@@ -485,13 +505,34 @@ function getStats(){
   var totalWo=workOrders.length;
   var woInProgress=workOrders.filter(function(w){return w.status==='in_progress';}).length;
   var woCompleted=workOrders.filter(function(w){return w.status==='completed';}).length;
+  var rejected=taskRequests.filter(function(t){return t.status==='rejected';}).length;
   return{
-    pending:pending,inProgress:inProgress,completed:completed,
+    pending:pending,inProgress:inProgress,completed:completed,rejected:rejected,
     critical:critical,high:high,medium:medium,
     activeTechs:activeTechs,total:taskRequests.length,
     totalAssets:totalAssets,totalDepts:totalDepts,
     totalWo:totalWo,woInProgress:woInProgress,woCompleted:woCompleted
   };
+}
+
+function isPriorityCritical(p){return p==='critical'||p===0;}
+function isPriorityHigh(p){return p==='high'||p===1;}
+function isPriorityMedium(p){return p==='medium'||p===2;}
+function getPriorityBadge(p){
+  if(isPriorityCritical(p)) return '<span class="badge badge-p0">P0 CRITICAL</span>';
+  if(isPriorityHigh(p)) return '<span class="badge badge-p1">P1 URGENT</span>';
+  return '<span class="badge badge-p2">P2 NORMAL</span>';
+}
+function getPriorityShort(p){
+  if(isPriorityCritical(p)) return 'P0';
+  if(isPriorityHigh(p)) return 'P1';
+  return 'P2';
+}
+function getFullNameForUserId(userId){
+  if(!userId) return 'Unknown';
+  var user=allUsers[userId];
+  if(user&&user.full_name) return user.full_name;
+  return userId.slice(0,8);
 }
 
 function renderAdminDashboard(){
@@ -526,8 +567,8 @@ function renderAdminActivityFeed(){
 
   taskRequests.slice(0,8).forEach(function(tk){
     var a=assetIdMap[tk.asset_id]||{};
-    var dotColor=tk.priority==='critical'?'red':tk.priority==='high'?'amber':'cyan';
-    var statusText=tk.status==='pending'?'New task request submitted':tk.status==='approved'?'Task approved and dispatched':tk.status==='completed'?'Task completed':'Task updated';
+    var dotColor=isPriorityCritical(tk.priority)?'red':isPriorityHigh(tk.priority)?'amber':'cyan';
+    var statusText=tk.status==='pending'?'New task request submitted':tk.status==='approved'?'Task approved and dispatched':tk.status==='completed'?'Task completed':tk.status==='rejected'?'Task rejected':'Task updated';
     activities.push({
       dot:dotColor,
       text:'<strong>'+esc(a.name||'Asset')+'</strong> — '+statusText,
@@ -539,11 +580,11 @@ function renderAdminActivityFeed(){
   workOrders.slice(0,5).forEach(function(wo){
     var tr=taskRequests.find(function(t){return t.task_request_id===wo.task_request_id;})||{};
     var a=assetIdMap[tr.asset_id]||{};
-    var tech=technicians.find(function(t){return t.technician_id===wo.recommended_technician_id;})||{};
+    var techName=getFullNameForUserId(wo.recommended_technician_id);
     var dotColor=wo.status==='completed'?'green':wo.status==='in_progress'?'accent':'amber';
     activities.push({
       dot:dotColor,
-      text:'Work order for <strong>'+esc(a.name||'Asset')+'</strong> assigned to <strong>'+esc(tech.full_name||'Technician')+'</strong>',
+      text:'Work order for <strong>'+esc(a.name||'Asset')+'</strong> assigned to <strong>'+esc(techName)+'</strong>',
       time:wo.created_at||new Date().toISOString(),
       ts:new Date(wo.created_at||new Date().toISOString()).getTime()
     });
@@ -576,8 +617,9 @@ function renderAdminTechPerformance(){
   var techData=technicians.map(function(t){
     var assigned=workOrders.filter(function(w){return w.recommended_technician_id===t.technician_id;}).length;
     var completed=workOrders.filter(function(w){return w.recommended_technician_id===t.technician_id&&w.status==='completed';}).length;
-    var r=feedbacks.filter(function(f){return f.technician_id===t.technician_id;});
-    var avg=r.length?Math.round(r.reduce(function(s,f){return s+f.rating;},0)/r.length):5;
+    // Handle both real schema (rated_by_user_id) and mock schema (technician_id)
+    var r=feedbacks.filter(function(f){return f.technician_id===t.technician_id||f.rated_by_user_id===t.user_id;});
+    var avg=r.length?Math.round(r.reduce(function(s,f){return s+(f.derived_rating||f.rating||5);},0)/r.length):5;
     var pct=assigned?Math.round((completed/assigned)*100):0;
     return {tech:t,assigned:assigned,completed:completed,avg:avg,pct:pct};
   }).sort(function(a,b){return b.avg-a.avg;});
@@ -653,10 +695,14 @@ function renderDashboard(){
 
 function renderDepts(){
   var t=$('fm-dept-dashboard-table');if(!t)return;
+  if(!departments.length){
+    t.innerHTML='<tr><td style="padding:20px;text-align:center;color:var(--text-3)">No departments registered</td></tr>';
+    return;
+  }
   t.innerHTML=departments.map(function(d){
     var isSel = selectedDeptId === d.department_id;
     var deptTasks=taskRequests.filter(function(tk){return assets.some(function(a){return a.asset_id===tk.asset_id&&deptMap[a.asset_id]&&deptMap[a.asset_id].department_id===d.department_id;});});
-    var hasCrit=deptTasks.some(function(tk){return(tk.priority==='critical'||tk.priority===0)&&tk.status!=='completed';});
+    var hasCrit=deptTasks.some(function(tk){return isPriorityCritical(tk.priority)&&tk.status!=='completed';});
     var b=hasCrit?'<span class="badge badge-p0" style="padding:2px 8px;font-size:10px">LINE STOP</span>':'<span class="badge badge-success" style="padding:2px 8px;font-size:10px">OPERATIONAL</span>';
     return '<tr class="'+(isSel?'active':'')+'" data-dept="'+esc(d.department_id)+'" onclick="selectDept(\''+esc(d.department_id)+'\')"><td style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;"><span style="font-weight:700;color:var(--text)">'+esc(d.name)+'</span>'+b+'</td></tr>';
   }).join('')||'<tr><td style="padding:20px;text-align:center;color:var(--text-3)">No departments</td></tr>';
@@ -678,7 +724,7 @@ function renderTasks(){
 
   t.innerHTML=list.map(function(tk){
     var a=assetIdMap[tk.asset_id]||{};
-    var priBadge=(tk.priority==='critical'||tk.priority===0)?'<span class="badge badge-p0">P0 CRITICAL</span>':(tk.priority==='high'||tk.priority===1)?'<span class="badge badge-p1">P1 URGENT</span>':'<span class="badge badge-p2">P2 NORMAL</span>';
+    var priBadge=getPriorityBadge(tk.priority);
     var stBadge=tk.status==='approved'||tk.status==='in_progress'?'<span class="badge badge-warning">IN PROGRESS</span>':tk.status==='completed'?'<span class="badge badge-success">COMPLETED</span>':tk.status==='rejected'?'<span class="badge badge-danger">REJECTED</span>':'<span class="badge badge-pending">PENDING</span>';
     var cls=tk.status==='approved'||tk.status==='in_progress'?'row-planned':tk.status==='rejected'?'row-deleted':tk.status==='pending'?'row-unplanned':'';
     return '<tr class="'+cls+'" onclick="selectTask(\''+esc(tk.task_request_id)+'\')"><td class="mono" style="font-weight:700;color:var(--text)">'+esc(a.asset_code||'—')+'</td><td style="font-weight:700">'+esc(a.name||'—')+'</td><td>'+esc(tk.task_type||'Repair')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(tk.description)+'</td><td>'+priBadge+'</td><td>'+stBadge+'</td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[0])+'</td><td><div class="radio-dot" data-id="'+esc(tk.task_request_id)+'"></div></td></tr>';
@@ -702,7 +748,7 @@ function renderApprovals(){
   var b=$('approve-count-badge');if(b)b.textContent=pending.length;
   t.innerHTML=pending.map(function(tk){
     var a=assetIdMap[tk.asset_id]||{};
-    var priBadge=(tk.priority==='critical'||tk.priority===0)?'<span class="badge badge-p0">P0 CRITICAL</span>':(tk.priority==='high'||tk.priority===1)?'<span class="badge badge-p1">P1 URGENT</span>':'<span class="badge badge-p2">P2 NORMAL</span>';
+    var priBadge=getPriorityBadge(tk.priority);
     return '<tr><td class="mono" style="font-weight:700;color:var(--accent-light)">'+esc((tk.task_request_id||'').slice(0,8))+'</td><td><div style="font-weight:700;color:var(--text)">'+esc(tk.created_by_role||'Operator')+'</div><div style="font-size:11px;color:var(--text-3)">'+esc(a.name||a.location||'—')+'</div></td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[0])+'</td><td style="max-width:280px;line-height:1.4">'+esc(tk.description)+'</td><td>'+priBadge+'</td><td><span class="badge badge-pending">PENDING</span></td><td class="action-cell" style="white-space:nowrap"><button class="btn-approve" onclick="approveTask(\''+esc(tk.task_request_id)+'\')">Approve</button><button class="btn-reject" onclick="rejectTask(\''+esc(tk.task_request_id)+'\')">Reject</button></td></tr>';
   }).join('')||'<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--text-3)">No pending approvals matching filter</td></tr>';
 }
@@ -744,9 +790,9 @@ function renderBreakdown(){
 
   var list = taskRequests.slice();
   if(currentBreakdownTab === 'leakage') {
-    list = list.filter(function(tk){ return (tk.priority==='critical'||tk.priority===0||tk.priority==='high') || (tk.description||'').toLowerCase().includes('leak'); });
+    list = list.filter(function(tk){ return isPriorityCritical(tk.priority)||isPriorityHigh(tk.priority) || (tk.description||'').toLowerCase().includes('leak'); });
   } else if(currentBreakdownTab === 'repairs') {
-    list = list.filter(function(tk){ return tk.task_type === 'repair' || (tk.priority==='high'||tk.priority==='critical'); });
+    list = list.filter(function(tk){ return tk.task_type === 'repair' || isPriorityHigh(tk.priority)||isPriorityCritical(tk.priority); });
   } else if(currentBreakdownTab === 'pending') {
     list = list.filter(function(tk){ return tk.status === 'pending'||tk.status==='pending_approval'; });
   } else if(currentBreakdownTab === 'approved') {
@@ -756,8 +802,9 @@ function renderBreakdown(){
   t.innerHTML=list.map(function(tk){
     var a=assetIdMap[tk.asset_id]||{};
     var isSel = selectedBreakdownTaskId === tk.task_request_id;
-    var priBadge=(tk.priority==='critical'||tk.priority===0)?'<span class="badge badge-p0">P0</span>':(tk.priority==='high'||tk.priority===1)?'<span class="badge badge-p1">P1</span>':'<span class="badge badge-p2">P2</span>';
-    return '<tr class="'+(isSel?'selected':'')+'" data-breakdown-id="'+esc(tk.task_request_id)+'" onclick="selectBreakdownTask(\''+esc(tk.task_request_id)+'\')"><td class="mono" style="font-weight:700">'+esc((tk.task_request_id||'').slice(0,8))+'</td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[0])+'</td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[1]||'').slice(0,5)+'</td><td>'+esc(a.location||'—')+'</td><td style="font-weight:700">'+esc(a.name||'—')+'</td><td>'+esc(tk.created_by_user_id||'Operator')+'</td><td style="max-width:220px;line-height:1.4">'+esc(tk.description)+'</td><td>'+priBadge+'</td><td><button class="btn-primary" style="padding:6px 12px;font-size:11px" onclick="event.stopPropagation();dispatchTask(\''+esc(tk.task_request_id)+'\')">Dispatch</button></td></tr>';
+    var priBadge=getPriorityBadge(tk.priority);
+    var creatorName=getFullNameForUserId(tk.created_by_user_id);
+    return '<tr class="'+(isSel?'selected':'')+'" data-breakdown-id="'+esc(tk.task_request_id)+'" onclick="selectBreakdownTask(\''+esc(tk.task_request_id)+'\')"><td class="mono" style="font-weight:700">'+esc((tk.task_request_id||'').slice(0,8))+'</td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[0])+'</td><td class="mono-text">'+esc((tk.requested_at||'').split('T')[1]||'').slice(0,5)+'</td><td>'+esc(a.location||'—')+'</td><td style="font-weight:700">'+esc(a.name||'—')+'</td><td>'+esc(creatorName)+'</td><td style="max-width:220px;line-height:1.4">'+esc(tk.description)+'</td><td>'+priBadge+'</td><td><button class="btn-primary" style="padding:6px 12px;font-size:11px" onclick="event.stopPropagation();dispatchTask(\''+esc(tk.task_request_id)+'\')">Dispatch</button></td></tr>';
   }).join('')||'<tr><td colspan="9" style="padding:40px;text-align:center;color:var(--text-3)">No tasks under tab "'+currentBreakdownTab.toUpperCase()+'"</td></tr>';
 }
 
@@ -802,10 +849,11 @@ function renderTechJobs(){
   t.innerHTML=workOrders.map(function(wo){
     var tr=taskRequests.find(function(tk){return tk.task_request_id===wo.task_request_id;})||{};
     var a=assetIdMap[tr.asset_id]||{};
-    var priBadge=(wo.priority==='critical'||wo.priority===0)?'<span class="badge badge-p0">P0 CRITICAL</span>':(wo.priority==='high'||wo.priority===1)?'<span class="badge badge-p1">P1 URGENT</span>':'<span class="badge badge-p2">P2 NORMAL</span>';
+    var priBadge=getPriorityBadge(wo.priority||tr.priority);
     var stBadge=wo.status==='completed'?'<span class="badge badge-success">COMPLETED</span>':wo.status==='in_progress'?'<span class="badge badge-warning">IN PROGRESS</span>':'<span class="badge badge-pending">DISPATCHED</span>';
-    var btn=wo.status==='completed'?'<button class="btn-outline" style="font-size:11px;padding:4px 8px" onclick="showRatingDialog(\''+esc(wo.work_order_id)+'\',\'tech-1\')">★ Rate Job</button>':wo.status==='in_progress'?'<button class="btn-success" style="font-size:12px;padding:8px 14px" onclick="updateWorkOrder(\''+esc(wo.work_order_id)+'\',\'completed\')">✅ Mark Completed</button>':'<button class="btn-primary" style="font-size:12px;padding:8px 14px" onclick="updateWorkOrder(\''+esc(wo.work_order_id)+'\',\'in_progress\')">🛠 Start Work</button>';
-    return '<tr><td class="mono" style="font-weight:700;color:var(--accent-light)">'+esc((wo.work_order_id||'').slice(0,8))+'</td><td style="font-weight:700;color:var(--text)">'+esc(a.name||'—')+'</td><td style="max-width:250px;line-height:1.4">'+esc(tr.description||'—')+'</td><td>'+priBadge+'</td><td>'+stBadge+'</td><td class="mono-text">'+esc((wo.scheduled_start||'').split('T')[0]||'—')+'</td><td style="white-space:nowrap">'+btn+'</td></tr>';
+    var techName=getFullNameForUserId(wo.recommended_technician_id);
+    var btn=wo.status==='completed'?'<button class="btn-outline" style="font-size:11px;padding:4px 8px" onclick="showRatingDialog(\''+esc(wo.work_order_id)+'\',\''+esc(wo.recommended_technician_id||'')+'\')">★ Rate Job</button>':wo.status==='in_progress'?'<button class="btn-success" style="font-size:12px;padding:8px 14px" onclick="updateWorkOrder(\''+esc(wo.work_order_id)+'\',\'completed\')">Mark Completed</button>':'<button class="btn-primary" style="font-size:12px;padding:8px 14px" onclick="updateWorkOrder(\''+esc(wo.work_order_id)+'\',\'in_progress\')">Start Work</button>';
+    return '<tr><td class="mono" style="font-weight:700;color:var(--accent-light)">'+esc((wo.work_order_id||'').slice(0,8))+'</td><td style="font-weight:700;color:var(--text)">'+esc(a.name||'—')+'</td><td style="max-width:250px;line-height:1.4">'+esc(tr.description||'—')+'</td><td>'+priBadge+'</td><td>'+stBadge+'</td><td class="mono-text">'+esc((wo.scheduled_start||wo.created_at||'').split('T')[0]||'—')+'</td><td style="white-space:nowrap">'+btn+'</td></tr>';
   }).join('')||'<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--text-3)">No active work orders</td></tr>';
 }
 
@@ -840,16 +888,17 @@ function renderProfile(){
   var el=$('profile-content');if(!el)return;
   if(!session) session={user:{full_name:'Nelson Fodjo',role:'coordinator',phone_number:'+23051234567'},role:'coordinator',userId:'coordinator'};
   var u=session.user;
-  var myRatings=feedbacks.filter(function(f){return f.technician_id===u.user_id;});
-  var avgRating=myRatings.length?Math.round(myRatings.reduce(function(s,f){return s+f.rating;},0)/myRatings.length):5;
-  var commendations=myRatings.filter(function(f){return f.commendation;}).length;
+  // Handle both real schema (rated_by_user_id) and mock schema (technician_id)
+  var myRatings=feedbacks.filter(function(f){return (f.rated_by_user_id===u.user_id)||(f.technician_id===u.user_id);});
+  var avgRating=myRatings.length?Math.round(myRatings.reduce(function(s,f){return s+(f.derived_rating||f.rating||5);},0)/myRatings.length):5;
+  var commendations=myRatings.filter(function(f){return f.commendation||f.derived_sentiment==='positive';}).length;
   var myTasks=taskRequests.filter(function(tk){return tk.created_by_user_id===u.user_id;}).length;
 
   el.innerHTML=
     '<div class="profile-header">'+
       '<div class="profile-avatar-lg">'+(u.full_name||'U').split(' ').map(function(n){return n[0]}).join('').toUpperCase().slice(0,2)+'</div>'+
       '<div class="profile-info"><h2>'+esc(u.full_name||'User')+'</h2>'+
-      '<span class="badge badge-'+(u.role==='coordinator'?'accent':u.role==='technician'?'cyan':'normal')+'">'+esc(u.role||'unknown')+'</span></div>'+
+      '<span class="badge badge-'+(u.role==='coordinator'||u.role==='admin'?'accent':u.role==='technician'?'cyan':'normal')+'">'+esc(u.role||'unknown')+'</span></div>'+
     '</div>'+
     '<div class="profile-stats">'+
       '<div class="pstat"><div class="pstat-num">'+myTasks+'</div><div class="pstat-label">My Requests</div></div>'+
@@ -887,9 +936,10 @@ function saveProfile(){
 
 function renderRatingBoard(){
   var techsWithRatings=technicians.map(function(t){
-    var r=feedbacks.filter(function(f){return f.technician_id===t.technician_id;});
-    var avg=r.length?Math.round(r.reduce(function(s,f){return s+f.rating;},0)/r.length):5;
-    return {tech:t,ratings:r,avg:avg,commendations:r.filter(function(f){return f.commendation;}).length};
+    // Handle both real schema (rated_by_user_id) and mock schema (technician_id)
+    var r=feedbacks.filter(function(f){return f.technician_id===t.technician_id||f.rated_by_user_id===t.user_id;});
+    var avg=r.length?Math.round(r.reduce(function(s,f){return s+(f.derived_rating||f.rating||5);},0)/r.length):5;
+    return {tech:t,ratings:r,avg:avg,commendations:r.filter(function(f){return f.commendation||f.derived_sentiment==='positive';}).length};
   }).sort(function(a,b){return b.avg-a.avg;});
 
   var rows=techsWithRatings.map(function(item){
@@ -967,14 +1017,28 @@ async function doLogin(){
   var ph=await sha256(pin);
   var local=JSON.parse(localStorage.getItem('nita_users')||'{}');
 
-  // SECURITY: No hardcoded PIN bypass - all authentication goes through Supabase or local user store
-
+  // Check local users (hashed PIN)
   if(local[phone]&&local[phone].pin_hash===ph){
     session={user:local[phone],role:local[phone].role,userId:phone};
     localStorage.setItem('nita_session',JSON.stringify(session));
     $('auth-overlay').classList.add('hidden');updateUI();loadAll();toast('Welcome back!','success');return;
   }
 
+  // Check Supabase directly - real data may store PIN as plain text or hash
+  try{
+    var users=await supa('app_user','phone_number=eq.'+encodeURIComponent(phone));
+    if(users&&users.length){
+      var u=users[0];
+      // Check both hashed and plain text PIN
+      if(u.pin_hash===ph||u.pin_hash===pin){
+        session={user:{full_name:u.full_name,role:u.role,phone_number:u.phone_number,user_id:u.user_id,email:u.email},role:u.role,userId:u.user_id};
+        localStorage.setItem('nita_session',JSON.stringify(session));
+        $('auth-overlay').classList.add('hidden');updateUI();loadAll();toast('Welcome, '+u.full_name+'!','success');return;
+      }
+    }
+  }catch(e){console.error('Supabase login check failed:',e);}
+
+  // Fallback: try n8n API
   try{
     var d=await API.post('/api-task-lifecycle',{action:'auth_check',phone_number:phone,pin_hash:ph});
     if(d&&!d.error){
@@ -1233,12 +1297,25 @@ async function submitRating(workOrderId,technicianId){
   if(!rating)return toast('Select a rating.','error');
   var comment=$('rating-comment').value.trim();
   var commend=$('rating-commend').checked;
+  // Format for real Supabase schema
   var fb = {
     feedback_id: uid('fb'),
-    work_order_id: workOrderId,technician_id:technicianId,rating:rating,
-    comment:comment,commendation:commend,created_by_user_id:session ? session.userId : 'Coordinator',
+    work_order_id: workOrderId,
+    rated_by_user_id:session ? session.userId : 'Coordinator',
+    feedback_type:'text',
+    feedback_text:comment || 'Rating: '+rating+'/5',
+    derived_sentiment:commend?'positive':'neutral',
+    derived_rating:rating,
+    key_issues:'"[]"',
+    flagged_for_review:false,
     created_at:new Date().toISOString()
   };
+  // Also keep mock fields for local rendering
+  fb.technician_id=technicianId;
+  fb.rating=rating;
+  fb.comment=comment;
+  fb.commendation=commend;
+  fb.created_by_user_id=fb.rated_by_user_id;
   feedbacks.unshift(fb);
   dlg.remove();
   toast(commend?'Commendation sent! Great job!':'Rating submitted!','success');
