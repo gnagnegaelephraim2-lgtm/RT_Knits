@@ -8,7 +8,7 @@ function $(id){return document.getElementById(id);}
 function $$(s){return document.querySelectorAll(s);}
 function uid(p){var a=new Uint8Array(8);crypto.getRandomValues(a);return p+'-'+Array.from(a,function(b){return b.toString(16).padStart(2,'0')}).join('');}
 async function sha256(s){var h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(h),function(b){return b.toString(16).padStart(2,'0')}).join('');}
-function normPhone(p){var c=p.replace(/[\s\-\(\)]/g,'');if(!c.startsWith('+')){if(c.startsWith('230')&&c.length>8)c='+'+c;else if(c.length===8&&/^[5796]/.test(c))c=''+c;else c='+'+c;}return c;}
+function normPhone(p){var c=p.replace(/[\s\-\(\)]/g,'');if(!c.startsWith('+')){if(c.startsWith('230')&&c.length>8)c='+'+c;else if(c.length===8&&/^[5796]/.test(c))c='+230'+c;else c='+'+c;}return c;}
 function ago(ts){if(!ts)return'';var d=Date.now()-new Date(ts).getTime();if(d<60000)return'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';}
 function today(){return new Date().toISOString().split('T')[0];}
 function toast(msg,type){

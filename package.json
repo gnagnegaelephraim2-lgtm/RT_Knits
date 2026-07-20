@@ -1,9 +1,6 @@
 {
-  "name": "nita-cmms-frontend",
+  "name": "rt-knits-nita-cmms",
   "version": "2.0.0",
   "private": true,
-  "description": "RT Knits NITA CMMS Frontend",
-  "scripts": {
-    "build": "echo 'No build step needed — static files served directly'"
-  }
+  "description": "RT Knits NITA CMMS — Maintenance Management Portal"
 }

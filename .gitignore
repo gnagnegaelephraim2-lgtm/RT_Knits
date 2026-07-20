@@ -17,14 +17,19 @@ target/
 .DS_Store
 Thumbs.db
 
-# Node (if used for tooling)
+# Node
 node_modules/
+package-lock.json
 
 # Logs
 *.log
+
+# Vercel
 .vercel
 
 # Build output
 public/dist/
 dist/
 
+# Data files (runtime-generated)
+data/
