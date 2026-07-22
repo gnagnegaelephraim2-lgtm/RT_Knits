@@ -278,7 +278,7 @@ body {
   width: 72px;
   height: 72px;
   margin: 0 auto 20px;
-  background: var(--bg-2);
+  background: linear-gradient(135deg, var(--accent-dim), rgba(99, 102, 241, 0.06));
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
   display: flex;
@@ -311,48 +311,11 @@ body {
   margin: 6px 0 24px;
 }
 
-.auth-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-2);
-  padding: 4px;
-  border-radius: var(--r-sm);
-  margin-bottom: 24px;
-}
-
-.auth-tab {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: none;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-3);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all .2s;
-  font-family: inherit;
-}
-
-.auth-tab:hover {
-  color: var(--text-2);
-}
-
-.auth-tab.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-
 .auth-form {
-  display: none;
-  animation: fadeUp .3s ease;
-}
-
-.auth-form.active {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  animation: fadeUp .3s ease;
 }
 
 /* ============================================================
@@ -415,6 +378,11 @@ textarea.field-input {
    BUTTONS
    ============================================================ */
 .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
   padding: 10px 20px;
   border: none;
   border-radius: var(--r-sm);
@@ -433,12 +401,21 @@ textarea.field-input {
   transform: translateY(-1px);
 }
 
+.btn-primary:active {
+  transform: translateY(0);
+}
+
 .btn-full {
   width: 100%;
   padding: 12px;
 }
 
 .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
   padding: 8px 16px;
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
@@ -457,6 +434,11 @@ textarea.field-input {
 }
 
 .btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
   padding: 8px 16px;
   border: 1px solid var(--green);
   border-radius: var(--r-sm);
@@ -466,9 +448,20 @@ textarea.field-input {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-success:hover {
+  background: var(--green);
+  color: #fff;
 }
 
 .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
   padding: 8px 16px;
   border: 1px solid var(--red);
   border-radius: var(--r-sm);
@@ -478,9 +471,19 @@ textarea.field-input {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-danger:hover {
+  background: var(--red);
+  color: #fff;
 }
 
 .btn-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
   padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -490,9 +493,20 @@ textarea.field-input {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-small:hover {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 36px;
   background: none;
   border: none;
   color: var(--text-3);
@@ -514,6 +528,10 @@ textarea.field-input {
 }
 
 .btn-approve {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
   padding: 5px 12px;
   border: 1px solid var(--green);
   border-radius: 6px;
@@ -524,9 +542,19 @@ textarea.field-input {
   font-weight: 700;
   cursor: pointer;
   margin-right: 4px;
+  transition: all .15s;
+}
+
+.btn-approve:hover {
+  background: var(--green);
+  color: #fff;
 }
 
 .btn-reject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
   padding: 5px 12px;
   border: 1px solid var(--red);
   border-radius: 6px;
@@ -536,6 +564,12 @@ textarea.field-input {
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-reject:hover {
+  background: var(--red);
+  color: #fff;
 }
 
 /* ============================================================
@@ -1548,6 +1582,80 @@ tr.selected {
 }
 
 /* ============================================================
+   WELCOME BAR
+   ============================================================ */
+.welcome-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--accent-dim), rgba(99, 102, 241, 0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--green), var(--accent));
+}
+
+.welcome-text {
+  flex: 1;
+}
+
+.welcome-greeting {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.welcome-sub {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.welcome-time {
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+  .welcome-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 18px 20px;
+  }
+
+  .welcome-greeting {
+    font-size: 18px;
+  }
+
+  .welcome-sub {
+    font-size: 13px;
+  }
+
+  .welcome-time {
+    padding-left: 0;
+    font-size: 12px;
+  }
+}
+
+/* ============================================================
    ADMIN DASHBOARD — MODERN 2026 DESIGN
    ============================================================ */
 .admin-stats-top {
@@ -1591,6 +1699,25 @@ tr.selected {
 
 .admin-stat-card:hover::before {
   opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .admin-quick-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .admin-action-card {
+    padding: 12px 8px;
+    min-height: 72px;
+    font-size: 10px;
+  }
+
+  .admin-action-card svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .admin-stat-icon {
@@ -1711,6 +1838,7 @@ tr.selected {
   align-items: center;
   gap: 8px;
   padding: 16px 10px;
+  min-height: 80px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-2);
@@ -1729,6 +1857,10 @@ tr.selected {
   background: var(--accent-dim);
   transform: translateY(-2px);
   box-shadow: var(--shadow);
+}
+
+.admin-action-card:active {
+  transform: translateY(0);
 }
 
 .admin-action-card.accent {
@@ -3761,23 +3893,32 @@ tr.selected {
   .btn-primary {
     padding: 10px 16px;
     font-size: 12px;
+    min-height: 42px;
   }
 
   .btn-outline {
-    padding: 6px 12px;
+    padding: 8px 14px;
     font-size: 12px;
+    min-height: 40px;
   }
 
   .btn-success,
   .btn-danger {
-    padding: 6px 12px;
+    padding: 8px 14px;
     font-size: 12px;
+    min-height: 40px;
   }
 
   .btn-approve,
   .btn-reject {
-    font-size: 10px;
-    padding: 4px 8px;
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 36px;
+  }
+
+  .btn-small {
+    min-height: 34px;
+    padding: 6px 10px;
   }
 }
 

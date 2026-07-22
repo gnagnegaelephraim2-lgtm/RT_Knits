@@ -1,6 +1,6 @@
 {
-  "buildCommand": "echo 'Static site — no build required'",
-  "outputDirectory": "public",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "framework": null,
-  "installCommand": "echo 'No dependencies'"
+  "installCommand": "npm install"
 }

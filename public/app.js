@@ -11,6 +11,18 @@ async function sha256(s){var h=await crypto.subtle.digest('SHA-256',new TextEnco
 function normPhone(p){var c=p.replace(/[\s\-\(\)]/g,'');if(!c.startsWith('+')){if(c.startsWith('230')&&c.length>8)c='+'+c;else if(c.length===8&&/^[5796]/.test(c))c='+230'+c;else c='+'+c;}return c;}
 function ago(ts){if(!ts)return'';var d=Date.now()-new Date(ts).getTime();if(d<60000)return'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';}
 function today(){return new Date().toISOString().split('T')[0];}
+function applyMobileLabels(){
+  $$('table.data-table').forEach(function(table){
+    var headers=[];
+    table.querySelectorAll('thead th').forEach(function(th){headers.push(th.textContent.trim());});
+    if(!headers.length)return;
+    table.querySelectorAll('tbody tr').forEach(function(tr){
+      tr.querySelectorAll('td').forEach(function(td,i){
+        if(i < headers.length && headers[i]) td.setAttribute('data-label',headers[i]);
+      });
+    });
+  });
+}
 function toast(msg,type){
   var t=document.createElement('div');t.className='toast toast-'+(type||'info');t.textContent=msg;
   document.body.appendChild(t);setTimeout(function(){t.classList.add('show');},10);
@@ -27,6 +39,23 @@ var selectedDeptId=null;
 var currentTaskFilter='all';
 var messageLogs=[],conversationStates=[],allUsers={};
 var selectedConvPhone=null, convFilterRole='all', simChatHistory=[];
+var auditLog=JSON.parse(localStorage.getItem('nita_audit_log')||'[]');
+
+// ── Audit Logging ──────────────────────────────────────────
+function logAudit(action,detail,target){
+  var entry={
+    id:uid('al'),
+    timestamp:new Date().toISOString(),
+    actor:session?session.user.full_name||session.userId:'System',
+    actorRole:session?session.role:'system',
+    action:action,
+    detail:detail||'',
+    target:target||''
+  };
+  auditLog.unshift(entry);
+  if(auditLog.length>200) auditLog=auditLog.slice(0,200);
+  localStorage.setItem('nita_audit_log',JSON.stringify(auditLog));
+}
 
 // ── Theme Management ───────────────────────────────────────
 function initTheme(){
@@ -35,7 +64,7 @@ function initTheme(){
     document.documentElement.setAttribute('data-theme',saved);
   }else{
     var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.setAttribute('data-theme',prefersDark?'dark':'dark');
+    document.documentElement.setAttribute('data-theme',prefersDark?'dark':'light');
   }
 }
 function toggleTheme(){
@@ -45,6 +74,11 @@ function toggleTheme(){
   localStorage.setItem('nita_theme',next);
 }
 initTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){
+  if(!localStorage.getItem('nita_theme')){
+    document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');
+  }
+});
 
 // ── Supabase ───────────────────────────────────────────────
 async function supa(table,query){
@@ -590,8 +624,19 @@ function renderAdminActivityFeed(){
     });
   });
 
+  // Add audit log entries
+  auditLog.slice(0,10).forEach(function(entry){
+    var dotColor=entry.action.includes('approved')?'green':entry.action.includes('rejected')?'red':entry.action.includes('dispatched')?'accent':entry.action.includes('created')?'cyan':'amber';
+    activities.push({
+      dot:dotColor,
+      text:'<strong>'+esc(entry.actor)+'</strong> — '+esc(entry.action.replace(/_/g,' '))+' '+esc(entry.detail),
+      time:entry.timestamp,
+      ts:new Date(entry.timestamp).getTime()
+    });
+  });
+
   activities.sort(function(a,b){return b.ts-a.ts;});
-  activities=activities.slice(0,10);
+  activities=activities.slice(0,15);
 
   if(!activities.length){
     el.innerHTML='<div class="conv-empty">No recent activity</div>';
@@ -675,6 +720,7 @@ function renderAll(){
   renderProfile();
   renderDocs('design');
   renderConversations();
+  applyMobileLabels();
 }
 
 function renderDashboard(){
@@ -838,6 +884,7 @@ function dispatchSelectedEngineer(){
   workOrders.unshift(wo);
   var tr = taskRequests.find(function(t){ return t.task_request_id === targetId; });
   if(tr) tr.status = 'approved';
+  logAudit('work_order_dispatched','Dispatched '+esc(tech.full_name)+' to task #'+targetId.slice(0,8)+' (WO #'+woId.slice(0,8)+')','work_order:'+woId);
 
   toast('Engineer '+tech.full_name+' dispatched to Task #'+targetId.slice(0,8)+'!','success');
   supaInsert('work_order', wo).catch(function(e){});
@@ -986,6 +1033,13 @@ function renderDocs(key){
 
 // ── Navigation ─────────────────────────────────────────────
 function navigateTo(id){
+  // Role-based pane access guard
+  if(!session) return;
+  var isCoordinator=session.role==='coordinator'||session.role==='admin';
+  if((id==='pane-api'||id==='pane-database')&&!isCoordinator){
+    toast('Access denied. Coordinator role required.','error');
+    return;
+  }
   $$('.content-pane').forEach(function(p){p.classList.remove('active');});
   $$('.nav-item').forEach(function(n){n.classList.remove('active');});
   var pane=$(id);if(pane)pane.classList.add('active');
@@ -1156,11 +1210,13 @@ async function approveTask(id){
     await supaUpdate('task_request',{task_request_id:id},{status:'approved',approved_at:new Date().toISOString()});
     var tr = taskRequests.find(function(t){ return t.task_request_id === id; });
     if(tr) tr.status = 'approved';
+    logAudit('task_approved','Approved task request #'+id.slice(0,8),'task_request:'+id);
     toast('Task '+id.slice(0,8)+' approved!','success');
     await loadAll();
   }catch(e){
     var tr2 = taskRequests.find(function(t){ return t.task_request_id === id; });
     if(tr2) tr2.status = 'approved';
+    logAudit('task_approved','Approved task request #'+id.slice(0,8)+' (local)','task_request:'+id);
     toast('Task approved locally!','success');
     renderAll();
   }
@@ -1172,11 +1228,13 @@ async function rejectTask(id){
     await supaUpdate('task_request',{task_request_id:id},{status:'rejected',rejection_reason:reason});
     var tr = taskRequests.find(function(t){ return t.task_request_id === id; });
     if(tr) tr.status = 'rejected';
+    logAudit('task_rejected','Rejected task #'+id.slice(0,8)+'. Reason: '+reason,'task_request:'+id);
     toast('Task rejected.','info');
     await loadAll();
   }catch(e){
     var tr2 = taskRequests.find(function(t){ return t.task_request_id === id; });
     if(tr2) tr2.status = 'rejected';
+    logAudit('task_rejected','Rejected task #'+id.slice(0,8)+' (local). Reason: '+reason,'task_request:'+id);
     toast('Task rejected locally.','info');
     renderAll();
   }
@@ -1197,6 +1255,7 @@ async function dispatchTask(id){
   workOrders.unshift(wo);
   var tr = taskRequests.find(function(t){ return t.task_request_id === id; });
   if(tr) tr.status = 'approved';
+  logAudit('work_order_dispatched','Dispatched work order #'+woId.slice(0,8)+' for task #'+id.slice(0,8)+' to '+techId,'work_order:'+woId);
   toast('Work order dispatched!','success');
   supaInsert('work_order',wo).catch(function(e){});
   renderAll();
@@ -1209,6 +1268,7 @@ async function updateWorkOrder(id, status){
     wo.status = status;
     if(status==='completed') wo.completed_at = body.completed_at;
   }
+  logAudit('work_order_updated','Work order #'+id.slice(0,8)+' status changed to '+status,'work_order:'+id);
   toast('Work order updated to '+status+'!','success');
   supaUpdate('work_order',{work_order_id:id},body).catch(function(e){});
   renderAll();
@@ -1251,6 +1311,7 @@ async function createTask(){
   };
 
   taskRequests.unshift(newTask);
+  logAudit('task_created','Created task request #'+taskId.slice(0,8)+' for asset '+esc(assetCode)+' ('+priority+')','task_request:'+taskId);
   toast('Task request created! Sent for approval.','success');
   $('te-asset-code').value='';$('te-asset-name').value='';$('te-description').value='';
 
@@ -1317,6 +1378,7 @@ async function submitRating(workOrderId,technicianId){
   fb.commendation=commend;
   fb.created_by_user_id=fb.rated_by_user_id;
   feedbacks.unshift(fb);
+  logAudit('rating_submitted','Rated work order #'+workOrderId.slice(0,8)+' - '+rating+'/5'+(commend?' (commended)':''),'work_order:'+workOrderId);
   dlg.remove();
   toast(commend?'Commendation sent! Great job!':'Rating submitted!','success');
   supaInsert('work_order_feedback',fb).catch(function(e){});
@@ -1504,6 +1566,7 @@ document.addEventListener('DOMContentLoaded',function(){
   var loginBtn = $('btn-login-submit'); if(loginBtn) loginBtn.addEventListener('click',doLogin);
   var signupBtn = $('btn-signup-submit'); if(signupBtn) signupBtn.addEventListener('click',doSignup);
   var logoutBtn = $('btn-logout'); if(logoutBtn) logoutBtn.addEventListener('click',doLogout);
+  var themeBtn = $('theme-toggle'); if(themeBtn) themeBtn.addEventListener('click',toggleTheme);
 
   var authPin = $('auth-pin'); if(authPin) authPin.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 

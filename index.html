@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>NITA — RT Knits Maintenance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../dist/assets/index-CAhXjFTt.css">
 </head>
 <body>
 
@@ -15,17 +14,12 @@
 <div id="auth-overlay" class="auth-overlay">
   <div class="auth-card">
     <div class="auth-logo-wrap">
-      <img src="favicon.svg" alt="RT" class="auth-logo-img">
+      <img src="/favicon.svg" alt="RT" class="auth-logo-img">
     </div>
     <h1 class="auth-title">NITA</h1>
     <p class="auth-sub" data-i18n="login_subtitle">RT Knits Maintenance Portal</p>
 
-    <div class="auth-tabs">
-      <button id="tab-login" class="auth-tab active" onclick="switchTab('login')" data-i18n="sign_in">Sign In</button>
-      <button id="tab-signup" class="auth-tab" onclick="switchTab('signup')" data-i18n="sign_up">Sign Up</button>
-    </div>
-
-    <div id="form-login-pane" class="auth-form active">
+    <div id="form-login-pane" class="auth-form active" style="display:flex;flex-direction:column;gap:12px">
       <label class="field-label" data-i18n="phone_label">Phone Number</label>
       <input type="text" id="auth-phone" class="field-input" placeholder="+230 5XXX XXXX" data-i18n-ph="phone_placeholder">
       <label class="field-label" data-i18n="pin_label">PIN</label>
@@ -33,35 +27,14 @@
       <button class="btn-primary btn-full" id="btn-login-submit" data-i18n="sign_in">Sign In</button>
     </div>
 
-    <div id="form-signup-pane" class="auth-form">
-      <label class="field-label" data-i18n="full_name">Full Name</label>
-      <input type="text" id="auth-signup-name" class="field-input" placeholder="John Doe">
-      <label class="field-label" data-i18n="phone_label">Phone Number</label>
-      <input type="text" id="auth-signup-phone" class="field-input" placeholder="+230 5XXX XXXX">
-      <label class="field-label" data-i18n="role_label">Role</label>
-      <select id="auth-signup-role" class="field-input" onchange="toggleSignupFields()">
-        <option value="operator" data-i18n="operator">Operator</option>
-        <option value="technician" data-i18n="technician">Technician</option>
-        <option value="coordinator" data-i18n="coordinator">Coordinator</option>
-        <option value="admin">Admin</option>
-      </select>
-      <div id="signup-trade-field" style="display:none">
-        <label class="field-label" data-i18n="trade">Trade</label>
-        <select id="auth-signup-trade" class="field-input">
-          <option>General Maintenance</option><option>Mechanic</option><option>Electrician</option><option>Welder</option><option>Plumber</option><option>HVAC</option>
-        </select>
-      </div>
-      <label class="field-label" data-i18n="create_pin">Create PIN (4-6 digits)</label>
-      <input type="password" id="auth-signup-pin" class="field-input" placeholder="••••" maxlength="6">
-      <button class="btn-primary btn-full" id="btn-signup-submit" data-i18n="create_account">Create Account</button>
-    </div>
+    <!-- Sign up removed — accounts are pre-provisioned by admin -->
   </div>
 </div>
 
 <!-- ==================== SIDEBAR ==================== -->
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <img src="favicon.svg" alt="RT" class="sidebar-logo">
+    <img src="/favicon.svg" alt="RT" class="sidebar-logo">
     <div class="sidebar-brand-text">
       <span class="sidebar-brand-name">NITA</span>
       <span class="sidebar-brand-sub">RT Knits</span>
@@ -144,7 +117,7 @@
       <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <img src="favicon.svg" alt="RT" class="topbar-logo">
+      <img src="/favicon.svg" alt="RT" class="topbar-logo">
       <div>
         <div class="topbar-title">NITA Maintenance</div>
         <div class="topbar-sub" data-i18n="dash_title">Coordinator Dashboard</div>
@@ -168,11 +141,15 @@
 
     <!-- PANE: Admin Dashboard -->
     <section id="pane-dashboard" class="content-pane active">
-      <!-- Top Stats Row -->
+      <div class="welcome-bar" id="welcome-bar">
+        <div class="welcome-text">
+          <h2 class="welcome-greeting" id="welcome-greeting">Welcome back</h2>
+          <p class="welcome-sub" id="welcome-sub">Here's your maintenance overview for today.</p>
+        </div>
+        <div class="welcome-time" id="welcome-time"></div>
+      </div>
       <div id="admin-stats-top" class="admin-stats-top"></div>
-
       <div class="admin-dash-grid">
-        <!-- Left Column: Departments + Activity -->
         <div class="admin-dash-left">
           <div class="card">
             <div class="card-header-row">
@@ -193,8 +170,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Center Column: Quick Actions + Department Detail -->
         <div class="admin-dash-center">
           <div class="card">
             <div class="card-header" data-i18n="dash_new_request">New Request</div>
@@ -226,8 +201,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Department Detail -->
           <div class="card">
             <div class="card-header-row">
               <div class="card-header" style="margin:0;border:none;padding:0" data-i18n="dash_selected_dept">Selected Department</div>
@@ -242,8 +215,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Right Column: Technician Performance + Priority Breakdown -->
         <div class="admin-dash-right">
           <div class="card">
             <div class="card-header-row">
@@ -552,7 +523,7 @@
           <h2>Solution Design</h2>
           <p>NITA (Next-generation Intelligent Triage Assistant) replaces legacy FileMaker coordinator bottlenecks with an automated AI routing assistant for maintenance tasks at RT Knits factory in Mauritius.</p>
           <h3>Architecture</h3>
-          <p>Stack: Rust (Actix-web) server + vanilla JS frontend + Supabase (PostgreSQL) + Vercel hosting. Integrates WhatsApp via n8n for Creole/English voice-to-task triage pipeline.</p>
+          <p>Stack: Rust (Actix-web) server + TypeScript frontend + Supabase (PostgreSQL) + Vercel hosting. Integrates WhatsApp via n8n for Creole/English voice-to-task triage pipeline.</p>
         </div>
       </div>
     </section>
@@ -567,6 +538,6 @@
   </div>
 </main>
 
-<script type="module" src="../dist/assets/index-CJ21scHX.js"></script>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>

@@ -505,11 +505,6 @@ fn extract_client_ip_from_req(req: &HttpRequest) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-fn extract_client_ip<T>(_req: &web::Json<T>) -> String {
-    // Fallback for JSON-only endpoints without request access
-    "unknown".to_string()
-}
-
 // ============================================================
 // MAIN SERVER
 // ============================================================
@@ -606,7 +601,7 @@ async fn main() -> std::io::Result<()> {
             .service(secure_login)
             .service(secure_status)
             .service(health_check)
-            .service(Files::new("/", "./public").index_file("index.html"))
+            .service(Files::new("/", "./dist").index_file("index.html"))
     })
     .bind(("0.0.0.0", port))?
     .run()
